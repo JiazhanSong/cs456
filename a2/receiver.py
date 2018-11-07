@@ -13,6 +13,8 @@ serverSocket = socket(AF_INET, SOCK_DGRAM)
 
 expectingPacket = 0
 
+f = open(filename, "w+")
+
 while True:
   UDPdata, clientAddress = serverSocket.recvfrom( receiveDataPort )
   p = parse_udp_data(UDPdata)
@@ -21,12 +23,15 @@ while True:
   # if data
   if p.type == 1:
     if p.seq_num == expectingPacket % packet.SEQ_NUM_MODULO:
-      returnPacket = packet.create_ack(p.seq_num)
+      f.write(p.data) # read and write to file
+      
+      returnPacket = packet.create_ack(p.seq_num) #send response
       expectingPacket = expectingPacket + 1
     else:
       returnPacket = packet.create_ack(expectingPacket - 1)
     # send
     serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
+
   # if eot
   elif p.type == 2:
     returnPacket = packet.create_eot(-1)
@@ -34,4 +39,5 @@ while True:
     serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
     break
   
+f.close()
 serverSocket.close()
