@@ -56,9 +56,10 @@ while packetsSent < totalPackets:
   ## send packets
   print("start and end:",startpoint, endpoint)
   for p in range(startpoint, endpoint):
-    print("send packet")
+    senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendAckPort))
   # wait on acknowledger
   acknowledger.join()
 
+senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendAckPort))packets[p]
 
 senderSocket.close()

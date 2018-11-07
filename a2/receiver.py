@@ -25,9 +25,13 @@ while True:
       expectingPacket = expectingPacket + 1
     else:
       returnPacket = packet.create_ack(expectingPacket - 1)
+    # send
+    serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
   # if eot
   elif p.type == 2:
-    returnPacket = packet.create_eot(p.seq_num)
+    returnPacket = packet.create_eot(-1)
+    # send
+    serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
+    break
   
-  # send packet
-  serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
+serverSocket.close()
