@@ -33,6 +33,8 @@ while True:
     serverSocket.sendto("success".encode(), clientAddress)
     print("r_port confirmation received from client")
   else:
+    serverSocket.sendto("failure".encode(), clientAddress)
+    print("r_port confirmation failed")
     continue
 
   # TCP connection
