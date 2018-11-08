@@ -19,7 +19,7 @@ f = open(filename, "w+")
 while True:
   UDPdata, clientAddress = serverSocket.recvfrom( 2048 )
   p = packet.parse_udp_data(UDPdata)
-  print("MESSAGE RECEIVED, PACKET DATA: ", p.data)
+  print("MESSAGE RECEIVED, PACKET DATA, seqnum: ", p.data, p.seq_num)
   returnPacket = None
   # if data
   if p.type == 1:
