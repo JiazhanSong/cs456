@@ -34,8 +34,10 @@ with open(filename) as f:
   data = f.read()
 
 packets = []
-for p in range(0, len(data), packet.MAX_DATA_LENGTH):
-  packets.append( packet.create_packet( (p / packet.MAX_DATA_LENGTH) , data[ p:(p + packet.MAX_DATA_LENGTH) ] ))
+
+data = [data[ p:p + packet.MAX_DATA_LENGTH] for p in range(0, len(data), packet.MAX_DATA_LENGTH)]
+for p in range(len(data)):
+  packets.append( packet.create_packet( p, data[ p:(p + packet.MAX_DATA_LENGTH) ] ))
 
 
 N = 10              # window size
