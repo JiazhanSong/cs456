@@ -61,7 +61,6 @@ with open(filename) as f:
 
 packets = []
 for p in range(0, len(data), packet.MAX_DATA_LENGTH):
-  print(p/packet.MAX_DATA_LENGTH)
   packets.append( packet.create_packet( int(p/packet.MAX_DATA_LENGTH), data[ p:(p + packet.MAX_DATA_LENGTH) ] ))
 
 
@@ -84,6 +83,7 @@ while packetsSent < totalPackets:
   ## send packets
   print("start and end:",startpoint, endpoint)
   for p in range(startpoint, endpoint):
+    print( "sending: ",packets[p].seq_num )
     senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
   # wait on acknowledger
   acknowledger.join()
