@@ -14,12 +14,14 @@ serverSocket.bind((hostAddress, receiveDataPort))
 
 expectingPacket = 0
 
-f = open(filename, "w+")
+f = open(filename, "w")
 
 while True:
   UDPdata, clientAddress = serverSocket.recvfrom( 2048 )
   p = packet.parse_udp_data(UDPdata)
-  print("MESSAGE RECEIVED, PACKET DATA, seqnum: ", p.data, p.seq_num)
+  print("MESSAGE RECEIVED, seqnum, PACKET DATA: ", p.seq_num, p.data)
+  print()
+  print()
   returnPacket = None
   # if data
   if p.type == 1:
