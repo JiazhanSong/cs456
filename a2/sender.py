@@ -18,6 +18,7 @@ def ack(startpoint, endpoint):
   global packetsSent
   global senderSocket
   global currPacket
+  global ackfile
 
   # start timer
   startTime = time.time()
@@ -34,10 +35,10 @@ def ack(startpoint, endpoint):
     getudp.join(0.15)
     if time.time() - startTime > 0.15:
       packetsSent = packetsSent + temporarySent
-      print("TIMEOUT TIMEOUT packets acked, startPacket: ", packetsSent, startPacket)
       return
 
     p = currPacket
+    ackfile.write(p.seq_num + "\n")
 
     # if receving old packet, ignore
     if startPacket > endPacket and not (p.seq_num < endPacket or p.seq_num > startPacket) :
@@ -54,12 +55,10 @@ def ack(startpoint, endpoint):
       offset = (N - startPacket) + p.seq_num - 1
 
     if offset > temporarySent:
-      print("new offset: ", offset)
       temporarySent = offset
 
   # return if all packets acked
   packetsSent = packetsSent + temporarySent
-  print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
   return
 
 # command line
@@ -86,6 +85,10 @@ currPacket = None
 senderSocket = socket(AF_INET, SOCK_DGRAM)
 senderSocket.bind((hostAddress, receiveAckPort))
 
+
+seqfile = open("seqnum.log", "w")
+ackfile = open("ack.log", "w")
+
 while packetsSent < totalPackets:
   # set endpoint to loop until min(packetsSent + N, totalPackets), start new thread for current window
   startpoint = packetsSent
@@ -95,9 +98,8 @@ while packetsSent < totalPackets:
   acknowledger.start()
 
   ## send packets
-  print("start and end:",startpoint, endpoint)
   for p in range(startpoint, endpoint):
-    print( "sending: ",packets[p].seq_num )
+    seqfile.write(str(p) + "\n")
     senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
   # wait on acknowledger
   acknowledger.join()
