@@ -1,62 +1,94 @@
-from packet import packet
 from socket import *
-from argparse import *
+from packet import packet
+import select
 import threading
 import time
+import sys
 
-def listen(f, t):
-    global WINDOW_SIZE
-    global successful_packets
+def ack(startpoint, endpoint):
+  global N
+  global packets
+  global packetsSent
+  global senderSocket
 
-    for i in range(f, t): 
-        ## wait for ack of packet i
-        print(i)
+  # start timer
+  startTime = time.time()
 
-    successful_packets += WINDOW_SIZE
+  temporarySent = 0
+  offset = 0
+  startPacket = startpoint % packet.SEQ_NUM_MODULO - 1
+  endPacket = endpoint % packet.SEQ_NUM_MODULO
 
-##############################
+  while packetsSent + temporarySent < endpoint:
+    # packets sent and acked, WAIT ON UDP
+    listResult = select.select([senderSocket], [], [], 0.15)
+    if not listResult[0]:   # if did not return in time
+      packetsSent = packetsSent + temporarySent
+      print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
+      return
 
-parser = ArgumentParser()
-parser.add_argument("host_address")
-parser.add_argument("r_port_num")
-parser.add_argument("s_port_num")
-parser.add_argument("filename")
+    UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
+    p = packet.parse_udp_data(UDPdata)
 
-## holds all the arguments
-args = parser.parse_args()
+    if p.seq_num > startPacket:
+      offset = p.seq_num - startPacket
+    else:
+      offset = (N - startPacket) + p.seq_num
 
-## parse text file
-with open (args.filename, "r") as myfile:
-    data=myfile.read()[:-1]
+    if offset > temporarySent:
+      print("new offset: ", offset)
+      temporarySent = offset
 
-data = [data[i:i+packet.MAX_DATA_LENGTH] for i in range(0, len(data), packet.MAX_DATA_LENGTH)]
-data = [packet.create_packet(i, data[i]) for i in range(len(data))]
+    # if taken longer than 150 ms return
+    if time.time() - startTime > 0.15:
+      packetsSent = packetsSent + temporarySent
+      print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
+      return
 
-## open udp socket
-udp_socket = socket(AF_INET, SOCK_DGRAM)
+  # return if all packets acked
+  packetsSent = packetsSent + temporarySent
+  print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
+  return
 
-## GBN
-WINDOW_SIZE = 10
-successful_packets = 0
-timeout = False
+# command line
+hostAddress = sys.argv[1]
+sendDataPort = int(sys.argv[2])
+receiveAckPort = int(sys.argv[3])
+filename = sys.argv[4]
 
-while successful_packets < len(data):
-    f = successful_packets
-    t = min(len(data), successful_packets + WINDOW_SIZE)
+# read file data
+with open(filename) as f:
+  data = f.read()
 
-    ## Take next WINDOW_SIZE packets
-    window = [data[i] for i in range(f, t)]
+packets = []
+for p in range(0, len(data), packet.MAX_DATA_LENGTH):
+  packets.append( packet.create_packet( int(p/packet.MAX_DATA_LENGTH), data[ p:(p + packet.MAX_DATA_LENGTH) ] ))
 
-    ## start timer (new thread)
-    listener = threading.Thread(target=listen, args=(f, t))
-    listener.start()
 
-    ## send packets
-    for packet in window:
-        print("send packet")
+N = 10              # window size
+packetsSent = 0      
+totalPackets = len(packets)
 
-    ## wait for listen/timer
-    listener.join()
+# UPD socket
+senderSocket = socket(AF_INET, SOCK_DGRAM)
+senderSocket.bind((hostAddress, receiveAckPort))
 
-## close udp socket
-udp_socket.close()
+while packetsSent < totalPackets:
+  # set endpoint to loop until min(packetsSent + N, totalPackets), start new thread for current window
+  startpoint = packetsSent
+  endpoint = min(packetsSent + N, totalPackets)
+
+  acknowledger = threading.Thread(target=ack, args=(startpoint, endpoint))
+  acknowledger.start()
+
+  ## send packets
+  print("start and end:",startpoint, endpoint)
+  for p in range(startpoint, endpoint):
+    print( "sending: ",packets[p].seq_num )
+    senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
+  # wait on acknowledger
+  acknowledger.join()
+
+senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendDataPort))
+
+senderSocket.close()

@@ -5,11 +5,19 @@ import threading
 import time
 import sys
 
+def getUDP():
+  global senderSocket
+  global currPacket
+  UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
+  currPacket = packet.parse_udp_data(UDPdata)
+
+
 def ack(startpoint, endpoint):
   global N
   global packets
   global packetsSent
   global senderSocket
+  global currPacket
 
   # start timer
   startTime = time.time()
@@ -21,14 +29,15 @@ def ack(startpoint, endpoint):
 
   while packetsSent + temporarySent < endpoint:
     # packets sent and acked, WAIT ON UDP
-    listResult = select.select([senderSocket], [], [], 0.15)
-    if not listResult[0]:   # if did not return in time
+    getudp = threading.Thread(target=getUDP, args=())
+    getudp.start()
+    getudp.join(0.15)
+    if time.time() - startTime > 0.15:
       packetsSent = packetsSent + temporarySent
       print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
       return
 
-    UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
-    p = packet.parse_udp_data(UDPdata)
+    p = currPacket
 
     if p.seq_num > startPacket:
       offset = p.seq_num - startPacket
@@ -38,12 +47,6 @@ def ack(startpoint, endpoint):
     if offset > temporarySent:
       print("new offset: ", offset)
       temporarySent = offset
-
-    # if taken longer than 150 ms return
-    if time.time() - startTime > 0.15:
-      packetsSent = packetsSent + temporarySent
-      print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
-      return
 
   # return if all packets acked
   packetsSent = packetsSent + temporarySent
@@ -68,6 +71,7 @@ for p in range(0, len(data), packet.MAX_DATA_LENGTH):
 N = 10              # window size
 packetsSent = 0      
 totalPackets = len(packets)
+currPacket = None
 
 # UPD socket
 senderSocket = socket(AF_INET, SOCK_DGRAM)
