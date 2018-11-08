@@ -20,6 +20,7 @@ while True:
   UDPdata, clientAddress = serverSocket.recvfrom( 2048 )
   p = packet.parse_udp_data(UDPdata)
   print("MESSAGE RECEIVED, seqnum, PACKET DATA: ", p.seq_num, p.data)
+  print("EXPECTING seqnum:", expectingPacket % packet.SEQ_NUM_MODULO)
   print()
   print()
   returnPacket = None
