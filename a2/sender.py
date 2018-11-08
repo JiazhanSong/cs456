@@ -37,17 +37,19 @@ def ack(startpoint, endpoint):
     if time.time() - startTime > 0.15:
       packetsSent = packetsSent + temporarySent
       return
-    print(2)
+    print(3)
     p = currPacket
     ackfile.write(str(p.seq_num) + "\n")
 
     # if receving old packet, ignore
-    if startPacket > endPacket and not (p.seq_num < endPacket or p.seq_num > startPacket) :
+    if startPacket > endPacket:
+      if not (p.seq_num < endPacket or p.seq_num > startPacket) :
       continue
-    elif p.seq_num > startPacket and p.seq_num > endPacket:
-      continue
-    elif p.seq_num < startPacket and p.seq_num < endPacket:
-      continue
+    else:
+      elif p.seq_num > startPacket and p.seq_num > endPacket:
+        continue
+      elif p.seq_num < startPacket and p.seq_num < endPacket:
+        continue
     
     print("seqnum, packets acked, startPacket, offset: ", p.seq_num, packetsSent, startPacket, temporarySent)
     if p.seq_num > startPacket:
