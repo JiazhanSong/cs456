@@ -32,6 +32,7 @@ while True:
       expectingPacket = expectingPacket + 1
     else:
       returnPacket = packet.create_ack(expectingPacket - 1)
+      print("ack send with seqnum:", expectingPacket - 1)
     # send
     serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
 
