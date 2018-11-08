@@ -43,7 +43,8 @@ packetsSent = 0
 totalPackets = len(packets)
 
 # UPD socket
-senderSocket = socket(AF_INET, SOCK_DGRAM) 
+senderSocket = socket(AF_INET, SOCK_DGRAM)
+senderSocket.bind((hostAddress, receiveAckPort))
 
 while packetsSent < totalPackets:
   # set endpoint to loop until min(packetsSent + N, totalPackets), start new thread for current window

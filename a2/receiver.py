@@ -10,13 +10,14 @@ receiveDataPort = int(sys.argv[3])
 filename = sys.argv[4]
 
 serverSocket = socket(AF_INET, SOCK_DGRAM) 
+serverSocket.bind((hostAddress, receiveDataPort))
 
 expectingPacket = 0
 
 f = open(filename, "w+")
 
 while True:
-  UDPdata, clientAddress = serverSocket.recvfrom( receiveDataPort )
+  UDPdata, clientAddress = serverSocket.recvfrom( 2048 )
   p = parse_udp_data(UDPdata)
   print("MESSAGE RECEIVED, PACKET DATA: ", p.data)
   returnPacket = None
