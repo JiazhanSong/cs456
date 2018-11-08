@@ -9,6 +9,7 @@ def ack(startpoint, endpoint):
   global N
   global packets
   global packetsSent
+  global senderSocket
 
   # start timer
   startTime = time.time()
@@ -20,7 +21,7 @@ def ack(startpoint, endpoint):
 
   while packetsSent + temporarySent < endpoint:
     # packets sent and acked, WAIT ON UDP
-    listResult = select.select([udp_socket], [], [], 0.15)
+    listResult = select.select([senderSocket], [], [], 0.15)
     if not listResult[0]:   # if did not return in time
       packetsSent = packetsSent + temporarySent
       print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
