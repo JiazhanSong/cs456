@@ -96,6 +96,7 @@ while packetsSent < totalPackets:
   # set endpoint to loop until min(packetsSent + N, totalPackets), start new thread for current window
   startpoint = packetsSent
   endpoint = min(packetsSent + N, totalPackets)
+  print("SEND PACKETS: ", startpoint, endpoint)
 
   acknowledger = threading.Thread(target=ack, args=(startpoint, endpoint))
   acknowledger.start()
