@@ -36,6 +36,7 @@ def ack(startpoint, endpoint):
       offset = (N - startPacket) + p.seq_num
 
     if offset > temporarySent:
+      print("new offset: ", offset)
       temporarySent = offset
 
     # if taken longer than 150 ms return
