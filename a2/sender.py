@@ -1,5 +1,6 @@
 from socket import *
 from packet import packet
+from select import select
 import threading
 import time
 import sys
@@ -19,6 +20,12 @@ def ack(startpoint, endpoint):
 
   while packetsSent + temporarySent < endpoint:
     # packets sent and acked, WAIT ON UDP
+    listResult = select.select([udp_socket], [], [], 0.15)
+    if not listResult[0]:   # if did not return in time
+      packetsSent = packetsSent + temporarySent
+      print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
+      return
+
     UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
     p = packet.parse_udp_data(UDPdata)
 
