@@ -1,6 +1,6 @@
 from socket import *
 from packet import packet
-from select import select
+import select
 import threading
 import time
 import sys
