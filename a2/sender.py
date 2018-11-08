@@ -38,7 +38,7 @@ def ack(startpoint, endpoint):
       return
 
     p = currPacket
-    ackfile.write(p.seq_num + "\n")
+    ackfile.write(str(p.seq_num) + "\n")
 
     # if receving old packet, ignore
     if startPacket > endPacket and not (p.seq_num < endPacket or p.seq_num > startPacket) :
