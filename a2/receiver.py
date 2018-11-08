@@ -29,7 +29,8 @@ while True:
 
     returnPacket = packet.create_ack( expectingPacket % packet.SEQ_NUM_MODULO - 1)
     # send
-    serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
+    if not expectingPacket == 0: # if received atleast one good packet
+      serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
 
   # if eot
   elif p.type == 2:
