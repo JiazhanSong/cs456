@@ -14,6 +14,8 @@ def ack(startpoint, endpoint):
 
   for p in range(startpoint, endpoint):
     # packets sent and acked, WAIT ON UDP
+    UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
+    p = packet.parse_udp_data(UDPdata)
     packetsSent = packetsSent + 1
 
     # if taken longer than 150 ms return
