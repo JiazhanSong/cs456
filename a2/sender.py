@@ -12,11 +12,17 @@ def ack(startpoint, endpoint):
   # start timer
   startTime = time.time()
 
-  for p in range(startpoint, endpoint):
+  lastPacket = startpoint % packet.SEQ_NUM_MODULO - 1
+  while packetsSent < endpoint:
     # packets sent and acked, WAIT ON UDP
     UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
     p = packet.parse_udp_data(UDPdata)
-    packetsSent = packetsSent + 1
+
+    if p.seq_num > lastPacket:
+      packetsSent = packetsSent + (p.seq_num - lastPacket)
+      lastPacket = p.seq_num
+    else:
+      packetsSent = packetsSent + ( (packet.SEQ_NUM_MODULO - lastPacket) + p.seq_num + 1)
 
     # if taken longer than 150 ms return
     if time.time() - startTime > 0.15:
