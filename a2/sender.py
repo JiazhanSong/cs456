@@ -22,13 +22,14 @@ def ack():
   while True:
     UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
     p = packet.parse_udp_data(UDPdata)
-
+    print("received packet: ", p.seq_num)
     lastBase = base
     baseModulo = base % packet.SEQ_NUM_MODULO
     currSeqnum = p.seq_num
     windowEnd = (baseModulo + N - 1) % packet.SEQ_NUM_MODULO
 
     if p.type == 2:
+      senderSocket.close()
       break
 
     # check if within valid range
@@ -36,9 +37,9 @@ def ack():
       base = base + currSeqnum - baseModulo + 1
     elif baseModulo > windowEnd and (currSeqnum <= windowEnd or baseModulo <= currSeqnum):
       if baseModulo <= currSeqnum:
-        base = base + currseqnum + 1 - baseModulo
+        base = base + currSeqnum + 1 - baseModulo
       else:
-        base = base + currseqnum + 1 (packet.SEQ_NUM_MODULO - baseModulo)
+        base = base + currSeqnum + 1 + (packet.SEQ_NUM_MODULO - baseModulo)
     
     if base > lastBase:
       if base != currSeqnum:
@@ -75,8 +76,8 @@ senderSocket = socket(AF_INET, SOCK_DGRAM)
 senderSocket.bind((hostAddress, receiveAckPort))
 
 
-seqfile = open("seqnum.log", "w")
-ackfile = open("ack.log", "w")
+#seqfile = open("seqnum.log", "w")
+#ackfile = open("ack.log", "w")
 
 acknowledger = threading.Thread(target=ack)
 acknowledger.start()
@@ -110,4 +111,3 @@ print("PROGRAM ENDED------------packetsSent:",packetsSent)
 # send eot
 senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendDataPort))
 
-senderSocket.close()
