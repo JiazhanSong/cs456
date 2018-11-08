@@ -24,11 +24,9 @@ while True:
   if p.type == 1:
     if p.seq_num == expectingPacket % packet.SEQ_NUM_MODULO:
       f.write(p.data) # read and write to file
-      
-      returnPacket = packet.create_ack( expectingPacket % packet.SEQ_NUM_MODULO) #send response
       expectingPacket = expectingPacket + 1
-    else:
-      returnPacket = packet.create_ack( expectingPacket % packet.SEQ_NUM_MODULO - 1)
+
+    returnPacket = packet.create_ack( expectingPacket % packet.SEQ_NUM_MODULO - 1)
     # send
     serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
 

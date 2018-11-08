@@ -25,10 +25,10 @@ def ack(startpoint, endpoint):
 
   temporarySent = 0
   offset = 0
-  startPacket = startpoint % packet.SEQ_NUM_MODULO - 1
+  startPacket = (startpoint - 1) % packet.SEQ_NUM_MODULO
   endPacket = endpoint % packet.SEQ_NUM_MODULO
 
-  while packetsSent + temporarySent < endpoint:
+  while packetsSent < endpoint:
     # packets sent and acked, WAIT ON UDP
     getudp = threading.Thread(target=getUDP, args=())
     getudp.start()
@@ -52,7 +52,7 @@ def ack(startpoint, endpoint):
     if p.seq_num > startPacket:
       offset = p.seq_num - startPacket
     else:
-      offset = (N - startPacket) + p.seq_num - 1
+      offset = (packet.SEQ_NUM_MODULO - 1 - startPacket) + p.seq_num + 1
 
     if offset > temporarySent:
       temporarySent = offset
