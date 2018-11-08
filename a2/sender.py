@@ -17,7 +17,7 @@ def ack(startpoint, endpoint):
   startPacket = startpoint % packet.SEQ_NUM_MODULO - 1
   endPacket = endpoint % packet.SEQ_NUM_MODULO
 
-  while packetsSent < endpoint:
+  while packetsSent + temporarySent < endpoint:
     # packets sent and acked, WAIT ON UDP
     UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
     p = packet.parse_udp_data(UDPdata)
