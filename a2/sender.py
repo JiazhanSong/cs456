@@ -50,7 +50,7 @@ def ack(startpoint, endpoint):
         continue
       elif p.seq_num < startPacket and p.seq_num < endPacket:
         continue
-    
+    print("start packet, endpacket: ", startPacket, endPacket)
     print("seqnum, packets acked, startPacket, offset: ", p.seq_num, packetsSent, startPacket, temporarySent)
     if p.seq_num > startPacket:
       offset = p.seq_num - startPacket
@@ -107,6 +107,8 @@ while packetsSent < totalPackets:
     senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
   # wait on acknowledger
   acknowledger.join()
+
+print("packetsSent:",packetsSent)
 
 senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendDataPort))
 
