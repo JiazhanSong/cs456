@@ -40,7 +40,7 @@ def ack(startpoint, endpoint):
     p = currPacket
 
     # if receving old packet, ignore
-    if startPacket > endPacket and not p.seq_num < endPacket:
+    if startPacket > endPacket and not (p.seq_num < endPacket or p.seq_num > startPacket) :
       continue
     elif p.seq_num > startPacket and p.seq_num > endPacket:
       continue
