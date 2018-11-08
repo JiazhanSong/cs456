@@ -46,9 +46,9 @@ def ack(startpoint, endpoint):
       if not (p.seq_num < endPacket or p.seq_num > startPacket) :
         continue
     else:
-      if p.seq_num > startPacket and p.seq_num > endPacket:
+      if p.seq_num >= endPacket:
         continue
-      elif p.seq_num < startPacket and p.seq_num < endPacket:
+      elif p.seq_num <= startPacket:
         continue
     print("start packet, endpacket: ", startPacket, endPacket)
     print("seqnum, packets acked, startPacket, offset: ", p.seq_num, packetsSent, startPacket, temporarySent)
