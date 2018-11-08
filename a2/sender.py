@@ -24,6 +24,8 @@ def ack(startpoint, endpoint):
     else:
       packetsSent = packetsSent + ( (packet.SEQ_NUM_MODULO - lastPacket) + p.seq_num + 1)
 
+    print("seqnum, packets acked: ", p.seq_num, packetsSent)
+
     # if taken longer than 150 ms return
     if time.time() - startTime > 0.15:
       return
