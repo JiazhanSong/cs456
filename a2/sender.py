@@ -33,7 +33,7 @@ def ack(startpoint, endpoint):
     if p.seq_num > startPacket:
       offset = p.seq_num - startPacket
     else:
-      offset = (packet.SEQ_NUM_MODULO - startPacket) + p.seq_num
+      offset = (N - startPacket) + p.seq_num
 
     if offset > temporarySent:
       temporarySent = offset
