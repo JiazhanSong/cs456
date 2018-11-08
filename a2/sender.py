@@ -48,7 +48,7 @@ def ack(startpoint, endpoint):
     elif p.seq_num < startPacket and p.seq_num < endPacket:
       continue
     
-
+    print("seqnum, packets acked, startPacket, offset: ", p.seq_num, packetsSent, startPacket, temporarySent)
     if p.seq_num > startPacket:
       offset = p.seq_num - startPacket
     else:
