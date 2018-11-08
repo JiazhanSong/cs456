@@ -19,6 +19,10 @@ f = open(filename, "w")
 while True:
   UDPdata, clientAddress = serverSocket.recvfrom( 2048 )
   p = packet.parse_udp_data(UDPdata)
+  print("MESSAGE RECEIVED, seqnum, PACKET DATA: ", p.seq_num, p.data)
+  print("EXPECTING seqnum:", expectingPacket % packet.SEQ_NUM_MODULO)
+  print()
+  print()
   returnPacket = None
   # if data
   if p.type == 1:
@@ -28,7 +32,8 @@ while True:
       returnPacket = packet.create_ack( expectingPacket % packet.SEQ_NUM_MODULO) #send response
       expectingPacket = expectingPacket + 1
     else:
-      returnPacket = packet.create_ack( expectingPacket % packet.SEQ_NUM_MODULO - 1)
+      returnPacket = packet.create_ack(expectingPacket - 1)
+      print("ack send with seqnum:", expectingPacket - 1)
     # send
     serverSocket.sendto( returnPacket.get_udp_data() , (hostAddress, sendAckPort))
 
