@@ -34,7 +34,7 @@ def ack(startpoint, endpoint):
     getudp.join(0.15)
     if time.time() - startTime > 0.15:
       packetsSent = packetsSent + temporarySent
-      print("seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
+      print("TIMEOUT TIMEOUT seqnum, packets acked, startPacket: ", p.seq_num, packetsSent, startPacket)
       return
 
     p = currPacket
