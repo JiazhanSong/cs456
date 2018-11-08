@@ -28,7 +28,7 @@ def ack(startpoint, endpoint):
   startPacket = (startpoint - 1) % packet.SEQ_NUM_MODULO
   endPacket = endpoint % packet.SEQ_NUM_MODULO
 
-  while packetsSent < endpoint:
+  while packetsSent + temporarySent < endpoint:
     # packets sent and acked, WAIT ON UDP
     getudp = threading.Thread(target=getUDP, args=())
     getudp.start()
