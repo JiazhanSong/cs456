@@ -11,11 +11,13 @@ def ack():
   global base
   global nextseqnum
   global timer
+  global ackfile
 
   while True:
     UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
     p = packet.parse_udp_data(UDPdata)
-    print("received packet: ", p.seq_num)
+    ackfile.write(p.data + "\n")
+
     lastBase = base
     baseModulo = base % packet.SEQ_NUM_MODULO
     currSeqnum = p.seq_num
@@ -67,8 +69,8 @@ senderSocket = socket(AF_INET, SOCK_DGRAM)
 senderSocket.bind((hostAddress, receiveAckPort))
 
 
-#seqfile = open("seqnum.log", "w")
-#ackfile = open("ack.log", "w")
+seqfile = open("seqnum.log", "w")
+ackfile = open("ack.log", "w")
 
 acknowledger = threading.Thread(target=ack)
 acknowledger.start()
@@ -76,6 +78,7 @@ acknowledger.start()
 while not (base == totalPackets):
   if nextseqnum < totalPackets and nextseqnum < base + N:
     senderSocket.sendto( packets[ nextseqnum ].get_udp_data() , (hostAddress, sendDataPort))
+    seqfile.write(nextseqnum + "\n")
 
     nextseqnum = nextseqnum + 1
     print(nextseqnum % packet.SEQ_NUM_MODULO)
@@ -88,6 +91,7 @@ while not (base == totalPackets):
     # resend packets
     for p in range(base, nextseqnum):
       senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
+      seqfile.write(p + "\n")
 
     timer = time.time()
 
@@ -100,3 +104,6 @@ print("total packets:", totalPackets)
 # send eot
 senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendDataPort))
 acknowledger.join()
+
+seqfile.close()
+ackfile.close()
