@@ -16,7 +16,7 @@ def ack():
   while True:
     UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
     p = packet.parse_udp_data(UDPdata)
-    ackfile.write(p.data + "\n")
+    ackfile.write(str(p.seq_num) + "\n")
 
     lastBase = base
     baseModulo = base % packet.SEQ_NUM_MODULO
@@ -78,7 +78,7 @@ acknowledger.start()
 while not (base == totalPackets):
   if nextseqnum < totalPackets and nextseqnum < base + N:
     senderSocket.sendto( packets[ nextseqnum ].get_udp_data() , (hostAddress, sendDataPort))
-    seqfile.write(nextseqnum + "\n")
+    seqfile.write(str(nextseqnum) + "\n")
 
     nextseqnum = nextseqnum + 1
     print(nextseqnum % packet.SEQ_NUM_MODULO)
@@ -91,7 +91,7 @@ while not (base == totalPackets):
     # resend packets
     for p in range(base, nextseqnum):
       senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
-      seqfile.write(p + "\n")
+      seqfile.write(str(p) + "\n")
 
     timer = time.time()
 
