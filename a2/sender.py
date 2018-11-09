@@ -5,13 +5,6 @@ import threading
 import time
 import sys
 
-def getUDP():
-  global senderSocket
-  global currPacket
-  UDPdata, clientAddress = senderSocket.recvfrom( 2048 )
-  currPacket = packet.parse_udp_data(UDPdata)
-
-
 def ack():
   global N
   global senderSocket
@@ -35,14 +28,14 @@ def ack():
     # check if within valid range
     if currSeqnum >= baseModulo and currSeqnum <= windowEnd:
       base = base + currSeqnum - baseModulo + 1
-    elif baseModulo > windowEnd and (currSeqnum <= windowEnd or baseModulo <= currSeqnum):
+    elif baseModulo > windowEnd and (currSeqnum <= windowEnd or currSeqnum >= baseModulo):
       if baseModulo <= currSeqnum:
         base = base + currSeqnum + 1 - baseModulo
       else:
         base = base + currSeqnum + 1 + (packet.SEQ_NUM_MODULO - baseModulo)
     
     if base > lastBase:
-      if base != currSeqnum:
+      if base != nextseqnum:
         timer = time.time()
       else:
         timer = None
@@ -64,12 +57,10 @@ for p in range(0, len(data), packet.MAX_DATA_LENGTH):
 
 
 N = 10              # window size
-packetsSent = 0
 nextseqnum = 0
 base = 0
 totalPackets = len(packets)
-timer = time.time()
-currPacket = None
+timer = None
 
 # UPD socket
 senderSocket = socket(AF_INET, SOCK_DGRAM)
@@ -82,32 +73,30 @@ senderSocket.bind((hostAddress, receiveAckPort))
 acknowledger = threading.Thread(target=ack)
 acknowledger.start()
 
-while not (base == nextseqnum and nextseqnum == totalPackets):
-  # set endpoint to loop until min(packetsSent + N, totalPackets), start new thread for current window
+while not (base == totalPackets):
   if nextseqnum < totalPackets and nextseqnum < base + N:
-    senderSocket.sendto( packets[ nextseqnum % packet.SEQ_NUM_MODULO ].get_udp_data() , (hostAddress, sendDataPort))
+    senderSocket.sendto( packets[ nextseqnum ].get_udp_data() , (hostAddress, sendDataPort))
 
+    nextseqnum = nextseqnum + 1
+    print(nextseqnum % packet.SEQ_NUM_MODULO)
     if base == nextseqnum:
       timer = time.time()
-    nextseqnum = nextseqnum + 1
 
-  elif timer != None and (timer - time.time() > 0.1):
-    timer = time.time()
+  elif timer != None and (time.time() - timer > 0.1):
     baseModulo = base % packet.SEQ_NUM_MODULO
 
     # resend packets
-    if baseModulo < (nextseqnum % packet.SEQ_NUM_MODULO):
-      for p in range(baseModulo, nextseqnum % packet.SEQ_NUM_MODULO):
-        senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
-    else:
-      for p in range(baseModulo, packet.SEQ_NUM_MODULO):
-        senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
-      for p in range(0, nextseqnum % packet.SEQ_NUM_MODULO):
-        senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
+    for p in range(base, nextseqnum):
+      senderSocket.sendto( packets[p].get_udp_data() , (hostAddress, sendDataPort))
+
+    timer = time.time()
 
 
-print("PROGRAM ENDED------------packetsSent:",packetsSent)
+
+
+print("PROGRAM ENDED------")
+print("total packets:", totalPackets)
 
 # send eot
 senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendDataPort))
-
+acknowledger.join()
