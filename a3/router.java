@@ -193,7 +193,7 @@ public class router {
                                 keycheck2 = true;
                             }
                         }
-                        if (keycheck2) { // adding edge to floating edge list
+                        if (!keycheck2) { // adding edge to floating edge list
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
                         } else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) { // adding edge to complete edge list
                             edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(floating_edges, linkcost));
