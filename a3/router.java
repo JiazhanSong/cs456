@@ -8,8 +8,6 @@ import java.nio.file.Paths;
 
 public class router {
     // members
-    public int numLinks;
-    public link_cost [] routerLinkcosts;
 
     public static boolean floating_edges_contains(Map<link_cost, Integer> map, link_cost key){
         for (link_cost l:map.keySet()){
@@ -63,6 +61,9 @@ public class router {
     }
 
     public static void main(String[] args) throws Exception {
+        int numLinks;
+        link_cost [] routerLinkcosts;
+
         int ID = Integer.valueOf(args[0]);
         String stringID = args[0];
         // set up nse host
