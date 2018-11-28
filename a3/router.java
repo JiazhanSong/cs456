@@ -190,6 +190,23 @@ public class router {
                     int cost = rec_lspdu.getCost();
                     link_cost linkcost = new link_cost(link, cost);
 
+                    // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
+                    for (int i = 0; i < numlinks; i++) {
+                        // if hello no received, or 
+                        if (rec_hello_links.contains(local_linkcosts[i].getLink()) || local_linkcosts[i].getLink() == via)
+                            continue;
+                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, local_linkcosts[i].getLink());
+                        if (check_lspdu(sent_lspdu, forward_pkt)) continue;
+                        else sent_lspdu.add(forward_pkt);
+                        byte[] forward_message = forward_pkt.getUDPdata();
+                        DatagramPacket forward_packet = new DatagramPacket(forward_message, forward_message.length, address, nse_port);
+                        receiveSocket.send(forward_packet);
+                        log_writer.write("R" + stringID + " sends an LS PDU: sender " + stringID +
+                                ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(link) +
+                                ", cost " + Integer.toString(cost) + ", via " + Integer.toString(local_linkcosts[i].getLink()));
+                        log_writer.newLine();
+                    }
+
                     // check if this link is already complete in router's database
                     if (!complete_edges_contains(complete_edges, linkcost)) { // not a complete edge
                         if (!floating_edges_contains(floating_edges, linkcost)) { // adding edge to floating edge list
@@ -257,11 +274,13 @@ public class router {
                         } else{ // no changes to topology database
                             continue;
                         }
+
+                        // The Link State Database and the Routing Information Base (RIB) are printed to a log file
                         r_db = new String[5];
                         r_db_numlinks = new int[5];
                         Arrays.fill(r_db, "");
                         Arrays.fill(r_db_numlinks, 0);
-                        for ( link_cost elem: floating_edges.keySet() ) { // only contains data for itself at the beginning
+                        for ( link_cost elem: floating_edges.keySet() ) { 
                             int routerID = floating_edges.get(elem);
                             int routerIndex = routerID-1;
                             r_db_numlinks[routerIndex]++;
@@ -295,47 +314,33 @@ public class router {
                         log_writer.newLine();
                     }
 
-                    // forwarding ls_pdu to all neighbours
-                    for (int i = 0; i < numlinks; i++) {
-                        if (local_linkcosts[i].getLink() == via || rec_hello_links.contains(local_linkcosts[i].getLink()))
-                            continue;
-                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, local_linkcosts[i].getLink());
-                        if (check_lspdu(sent_lspdu, forward_pkt)) continue;
-                        else sent_lspdu.add(forward_pkt);
-                        byte[] forward_message = forward_pkt.getUDPdata();
-                        DatagramPacket forward_packet = new DatagramPacket(forward_message, forward_message.length, address, nse_port);
-                        receiveSocket.send(forward_packet);
-                        log_writer.write("R" + stringID + " sends an LS PDU: sender " + stringID +
-                                ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(link) +
-                                ", cost " + Integer.toString(cost) + ", via " + Integer.toString(local_linkcosts[i].getLink()));
-                        log_writer.newLine();
-                    }
                 } else { // if it is hello packet
                     pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
                     log_writer.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(rec_hello.getRouter_id()) +
                                       ", link_id " + Integer.toString(rec_hello.getLink_id()));
                     log_writer.newLine();
 
-                    for (link_cost elem : floating_edges.keySet()) { // send each edge one at a time
-                        int router = floating_edges_retreive(floating_edges, elem);
-                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, router, elem.getLink(), elem.getCost(), rec_hello.getLink_id());
+                    for (link_cost elem : floating_edges.keySet()) { // send each edge one at a time from set of lspdus
+                        int routerOfEdge = floating_edges_retreive(floating_edges, elem);
+                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.getLink(), elem.getCost(), rec_hello.getLink_id());
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nse_port);
                         receiveSocket.send(hello_response_pkt);
                         
                         log_writer.write("R" + stringID + " sends an LS PDU: sender " + stringID +
-                                          ", ID " + Integer.toString(router) + ", link_id " + Integer.toString(elem.getLink()) +
+                                          ", ID " + Integer.toString(routerOfEdge) + ", link_id " + Integer.toString(elem.getLink()) +
                                           ", cost " + Integer.toString(elem.getCost()) + ", via " + Integer.toString(rec_hello.getLink_id()));
                         log_writer.newLine();
                     }
                     // remove link from pending Hellos
                     rec_hello_links.remove( Integer.valueOf(rec_hello.getLink_id()) );
                 }
-            } catch (SocketTimeoutException e){
+            } catch (SocketTimeoutException e) {
+                // program end
+                log_writer.close();
                 break;
             }
         }
-        log_writer.close();
     }
 }
 
