@@ -327,26 +327,24 @@ public class router {
                                 ", cost " + Integer.toString(cost) + ", via " + Integer.toString(local_linkcosts[i].getLink()));
                         log_writer.newLine();
                     }
-                } else { // lspdu packet: update database, forward to neighbours
+                } else { // if it is hello packet
                     pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
+                    rec_hello_links.add(rec_hello.getLink_id());
                     log_writer.write("R" + Integer.toString(router_id) + " receives a HELLO: router_id " + Integer.toString(rec_hello.getRouter_id()) +
                                       ", link_id " + Integer.toString(rec_hello.getLink_id()));
                     log_writer.newLine();
-                    rec_hello_links.add(rec_hello.getLink_id());
-                    for (link_cost l : floating_edges.keySet()) {
-                        int router = floating_edges_retreive(floating_edges, l);
-                        int link = l.getLink();
-                        int cost = l.getCost();
-                        pkt_LSPDU hello_response = new pkt_LSPDU(router_id, router, link, cost, rec_hello.getLink_id());
+
+                    for (link_cost elem : floating_edges.keySet()) {
+                        int router = floating_edges_retreive(floating_edges, elem);
+                        pkt_LSPDU hello_response = new pkt_LSPDU(router_id, router, elem.getLink(), elem.getCost(), rec_hello.getLink_id());
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nse_port);
                         receiveSocket.send(hello_response_pkt);
                         log_writer.write("R" + Integer.toString(router_id) + " sends an LS PDU: sender " + Integer.toString(router_id) +
-                                          ", router_id " + Integer.toString(router) + ", link_id " + Integer.toString(link) +
-                                          ", cost " + Integer.toString(cost) + ", via " + Integer.toString(rec_hello.getLink_id()));
+                                          ", router_id " + Integer.toString(router) + ", link_id " + Integer.toString(elem.getLink()) +
+                                          ", cost " + Integer.toString(elem.getCost()) + ", via " + Integer.toString(rec_hello.getLink_id()));
                         log_writer.newLine();
                     }
-                    
                 }
             } catch (SocketTimeoutException e){
                 break;
