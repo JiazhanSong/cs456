@@ -143,7 +143,7 @@ public class router {
         for (int i = 0; i<5; i++){
             String routerDirection = "R" + Integer.toString(router_id) + " -> " + "R" + Integer.toString(i+1);
             String output = "Unknown, Unknown";
-            if (router_id == (i+1)){
+            if ((i+1) == router_id){
                 log_writer.write(routerDirection + " -> Local, 0");
             } else {
                 log_writer.write(routerDirection + " -> " + output);
@@ -286,12 +286,11 @@ public class router {
                             if (D_names != null && D_names[i] != Integer.MAX_VALUE){
                                 output = "R" + Integer.toString(D_names[i]) + ", " + Integer.toString(D_costs[i]);
                             }
-                            if (router_id == (i+1)){
+                            if ((i+1) == router_id){
                                 log_writer.write(routerDirection + " -> Local, 0");
                             } else {
                                 log_writer.write(routerDirection + " -> " + output);
                             }
-                            log_writer.newLine();
                             log_writer.newLine();
                         }
                         log_writer.newLine();
