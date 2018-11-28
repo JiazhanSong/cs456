@@ -60,6 +60,9 @@ public class router {
     }
 
     public static void main(String[] args) throws Exception {
+        String [] r_db = new String[5];
+        int [] r_db_numlinks = new int[5];
+        
         // reading in command line arguements
         int router_id = Integer.valueOf(args[0]);
         String hostname = args[1];
@@ -85,12 +88,11 @@ public class router {
         ArrayList<Integer> D_names = null;
 
         // sending init packet to nse
+        // send init packet to network state emulator containing router id
+        log_writer.write("Router " + Integer.toString(router_id) + " sending INIT to network state emulator\n");
         pkt_INIT init_pkt = new pkt_INIT(router_id);
-        byte[] init_message = init_pkt.getUDPdata();
-        DatagramPacket init_packet = new DatagramPacket(init_message, init_message.length, address, nse_port);
+        DatagramPacket init_packet = new DatagramPacket(init_pkt.getUDPdata(), init_pkt.getUDPdata().length, address, nse_port);
         receiveSocket.send(init_packet);
-        log_writer.write("R" + Integer.toString(router_id) + " sends an INIT: router_id " + Integer.toString(router_id));
-        log_writer.newLine();
 
         // waiting to receive circuit_db from nse
         byte[] receiveData = new byte[1024];
@@ -108,8 +110,6 @@ public class router {
         }
         
         // logging initial topology/rib
-        String [] r_db = new String[5];
-        int [] r_db_numlinks = new int[5];
         String starter = "R" + Integer.toString(router_id) + " -> ";
         for (int i = 0; i<5; i++){
             r_db[i] = "";
