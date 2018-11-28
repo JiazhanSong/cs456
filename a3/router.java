@@ -7,28 +7,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class router {
-
-    public static boolean floating_edges_contains(Map<link_cost, Integer> map, link_cost key){
-        for (link_cost l:map.keySet()){
-            if (l.getLink() == key.getLink() && l.getCost() == key.getCost()){
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static int floating_edges_retreive(Map<link_cost, Integer> map, link_cost key){
-        int return_val = 0;
-        for (link_cost l:map.keySet()){
+        for (link_cost l: map.keySet()){
             if (l.getLink() == key.getLink() && l.getCost() == key.getCost()){
-                return_val = map.get(l);
+                return map.get(l);
             }
         }
-        return return_val;
+        return 0;
     }
 
     public static boolean check_lspdu(pkt_LSPDU pkt, ArrayList<pkt_LSPDU> pktlist){
-        for (pkt_LSPDU p:pktlist){
+        for (pkt_LSPDU p: pktlist){
             if (p.getRouter_id() == pkt.getRouter_id() && p.getLink_id() == pkt.getLink_id() && p.getCost() == pkt.getCost() 
                 && p.getVia() == pkt.getVia()) {
                 return true;
