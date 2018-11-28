@@ -17,6 +17,3 @@ receive ACKs from the emulator>, and <name of the file to be transferred>
 
 Tested on school computers, jzsong@ubuntu1604-006 jzsong@ubuntu1604-004 jzsong@ubuntu1604-002
 Using python3
-
-#NOTE, code does not work with unreliable connection likely because of a numerical error of some sort
-#      but works with stable connection

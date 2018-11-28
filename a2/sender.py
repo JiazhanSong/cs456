@@ -66,7 +66,7 @@ timer = None
 
 # UPD socket
 senderSocket = socket(AF_INET, SOCK_DGRAM)
-senderSocket.bind((hostAddress, receiveAckPort))
+senderSocket.bind(('', receiveAckPort))
 
 
 seqfile = open("seqnum.log", "w")
@@ -81,7 +81,7 @@ while not (base == totalPackets):
     seqfile.write(str(nextseqnum) + "\n")
 
     nextseqnum = nextseqnum + 1
-    print(nextseqnum % packet.SEQ_NUM_MODULO)
+
     if base == nextseqnum:
       timer = time.time()
 
@@ -95,11 +95,6 @@ while not (base == totalPackets):
 
     timer = time.time()
 
-
-
-
-print("PROGRAM ENDED------")
-print("total packets:", totalPackets)
 
 # send eot
 senderSocket.sendto( packet.create_eot(-1).get_udp_data() , (hostAddress, sendDataPort))

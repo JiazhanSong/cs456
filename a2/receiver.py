@@ -10,7 +10,7 @@ receiveDataPort = int(sys.argv[3])
 filename = sys.argv[4]
 
 serverSocket = socket(AF_INET, SOCK_DGRAM) 
-serverSocket.bind((hostAddress, receiveDataPort))
+serverSocket.bind(('', receiveDataPort))
 
 expectingPacket = 0
 
