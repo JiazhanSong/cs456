@@ -111,7 +111,7 @@ public class router {
         }
         log_writer.write("\n");
 
-        // sending hello packets to router's neighbours
+        // Each router then sends a HELLO_PDU to tell its neighbour
         for (int neighbor = 0; neighbor<numlinks; neighbor++){
             log_writer.write("R" + stringID + " sends a HELLO: ID " + stringID +
                               ", linkID " + Integer.toString(local_linkcosts[neighbor].getLink()));
@@ -121,12 +121,11 @@ public class router {
             receiveSocket.send(hello_packet);
         }
 
-        // receiving LS_PDUs & HELLOs from neighbours
         while ( true ) {
             try {
                 receiveData = new byte[1024];
                 receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                receiveSocket.setSoTimeout(2000);
+                receiveSocket.setSoTimeout(1500);
                 receiveSocket.receive(receivePacket);
                 ByteBuffer buffer = ByteBuffer.wrap(receiveData);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -174,7 +173,6 @@ public class router {
                         log_writer.write("\n");
                     }
 
-                    // check if this link is already complete in router's database
                     edge keyCheck = complete_edges.get(linkcost); // returns null if key not in map, otherwise value
                     if (keyCheck == null) { // not a complete edge
                         boolean keycheck2 = false;
@@ -183,14 +181,16 @@ public class router {
                                 keycheck2 = true;
                             }
                         }
-                        if (!keycheck2) { // adding edge to floating edge list
+                        // if not in incomplete edges list, add
+                        if (!keycheck2) {
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
-                        } else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) { // adding edge to complete edge list
+                        } // if new edge is complete, add edge to finished edges list
+                        else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) {
                             edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(floating_edges, linkcost));
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
                             complete_edges.put(linkcost, routers);
 
-                            // Dijkstra's algorithm to compute shortest paths with addition of new edge
+                            // Compute one hop for shortest path
                             D_costs = new int[5];
                             D_names = new int[5];
                             Arrays.fill(D_costs, Integer.MAX_VALUE);
@@ -213,7 +213,7 @@ public class router {
                             // add 4 more nodes to complete tree, iterate 4 times
                             for (int j=0; j<4; j++) {
                                 int min = Integer.MAX_VALUE;
-                                int min_index = 0; // router index (0-4)
+                                int min_index = 0;
 
                                 // choose edge with lowest cost
                                 for (int i = 0; i < 5; i++) {
@@ -245,7 +245,7 @@ public class router {
                                     }
                                 }
                             }
-                        } else{ // no changes to topology database
+                        } else { // no new info
                             continue;
                         }
 
@@ -261,17 +261,13 @@ public class router {
                             r_db[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
                         }
 
-                        // logging new topology database
                         log_writer.write("\n# Topology database\n");
-
                         for (int i = 0; i<5 && r_db_numlinks[i] !=0 ; i++){
                             log_writer.write("R" + stringID + " -> " + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
                             log_writer.write(r_db[i]);
                         }
 
-                        // logging new rib
                         log_writer.write("\n# RIB\n");
-
                         for (int i = 0; i<5; i++) {
                             int currentID = i + 1;
                             String routerDirection = "R" + stringID + " -> " + "R" + Integer.toString(currentID);
