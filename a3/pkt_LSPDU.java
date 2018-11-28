@@ -1,8 +1,7 @@
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.*;
 
+// data structure for lspdu
 public class pkt_LSPDU {
-
     public int sender;
     public int router_id;
     public int link_id;
