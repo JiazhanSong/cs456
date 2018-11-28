@@ -22,7 +22,7 @@ public class pkt_INIT {
 
     public static pkt_INIT init_parseUDPdata(byte[] UDPdata) throws Exception {
         ByteBuffer buffer = ByteBuffer.wrap(UDPdata);
-        buffer.order(ByteOrder.LITTLE_ENDIAN); // default is big endian
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
         int router = buffer.getInt();
         return new pkt_INIT(router);
     }

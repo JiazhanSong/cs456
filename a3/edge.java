@@ -1,10 +1,18 @@
 public class edge {
-    public int router1;
-    public int router2;
+    int r1;
+    int r2;
 
-    public edge(int r1, int r2){
-        router1 = router1;
-        router2 = router2;
+    public edge(int router1, int router2){
+        r1 = router1;
+        r2 = router2;
+    }
+
+    public int getR1(){
+        return r1;
+    }
+
+    public int getR2(){
+        return r2;
     }
 }
 
