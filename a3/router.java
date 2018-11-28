@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class router {
+    // helper
     public static int floating_edges_retreive(Map<link_cost, Integer> map, link_cost key){
         for (link_cost l: map.keySet()){
             if (l.getLink() == key.getLink() && l.getCost() == key.getCost()){
@@ -16,13 +17,12 @@ public class router {
         return 0;
     }
 
-
     public static void main(String[] args) throws Exception {
         // members
         link_cost [] local_linkcosts;
         int numlinks;
 
-        // reading in command line arguements
+        // command line args
         int ID = Integer.valueOf(args[0]);
         String stringID = Integer.toString(ID);
         String hostname = args[1];
@@ -36,33 +36,36 @@ public class router {
         File log = new File(s + "/" + "router" + stringID + ".log");
         log.delete(); // delete if exists
 
-        // general set up
-        BufferedWriter log_writer = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
+        // pending hellos
+        ArrayList<Integer> rec_hello_links = new ArrayList<Integer>();
+        // send lspdus
+        ArrayList<pkt_LSPDU> sent_lspdu = new ArrayList<pkt_LSPDU>();
+
+        // data for dijkstras
+        int [] D_costs = null;
+        int [] D_names = null;
+
+        // database
         Map<link_cost,Integer> floating_edges= new HashMap<link_cost,Integer>();
         Map<link_cost, edge> complete_edges = new HashMap<link_cost, edge>();
 
-        int [] D_costs = null;
-        int [] D_names = null;
-        ArrayList<Integer> rec_hello_links = new ArrayList<Integer>();
-        ArrayList<pkt_LSPDU> sent_lspdu = new ArrayList<pkt_LSPDU>();
-
         // send init packet to network state emulator containing router id
+        BufferedWriter log_writer = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
         log_writer.write("Router " + stringID + " sending INIT to network state emulator\n");
         pkt_INIT init_pkt = new pkt_INIT(ID);
         DatagramPacket init_packet = new DatagramPacket(init_pkt.getUDPdata(), init_pkt.getUDPdata().length, address, nse_port);
         receiveSocket.send(init_packet);
 
-        // waiting to receive circuit_db from nse
+        // receive circuit data, containing all local edges
         byte[] receiveData = new byte[1024];
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
         receiveSocket.receive(receivePacket);
-        circuit_DB circuit = circuit_DB.circuit_parseUDPdata(receiveData);
 
-        // adding circuit_db data to local router's database
+        circuit_DB circuit = circuit_DB.circuit_parseUDPdata(receiveData);
         numlinks = circuit.getNum_links();
         local_linkcosts = circuit.getLinkcost();
-        log_writer.write("R" + stringID + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(numlinks));
-        log_writer.write("\n");
+        log_writer.write("R" + stringID + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(numlinks) + "\n");
+
         for (int i = 0; i<numlinks; i++){
             log_writer.write(Integer.toString(local_linkcosts[i].getLink()) + "\n");
             log_writer.write(Integer.toString(local_linkcosts[i].getCost()) + "\n\n\n\n");
@@ -75,25 +78,23 @@ public class router {
             rec_hello_links.add(linkNum);
         }
         
-        // logging initial topology/rib
+        // print database
         String [] r_db = new String[5];
         Arrays.fill(r_db, "");
 
         int [] r_db_numlinks = new int[5];
         Arrays.fill(r_db_numlinks, 0);
-
-        String starter = "R" + stringID + " -> ";
         
         for ( link_cost elem: floating_edges.keySet() ) { // only contains data for itself at the beginning
             int routerID = floating_edges.get(elem);
             int routerIndex = routerID-1;
             r_db_numlinks[routerIndex]++;
-            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
+            r_db[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
         }
 
         log_writer.write("\n# Topology database\n");
         for (int i = 0; i<5 && r_db_numlinks[i] !=0 ; i++){
-            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
+            log_writer.write("R" + stringID + " -> " + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
             log_writer.write(r_db[i]);
         }
         
@@ -257,14 +258,14 @@ public class router {
                             int routerID = floating_edges.get(elem);
                             int routerIndex = routerID-1;
                             r_db_numlinks[routerIndex]++;
-                            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
+                            r_db[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
                         }
 
                         // logging new topology database
                         log_writer.write("\n# Topology database\n");
 
                         for (int i = 0; i<5 && r_db_numlinks[i] !=0 ; i++){
-                            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
+                            log_writer.write("R" + stringID + " -> " + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
                             log_writer.write(r_db[i]);
                         }
 
