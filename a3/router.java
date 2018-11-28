@@ -208,46 +208,50 @@ public class router {
                             // add boundary nodes
                             for (link_cost elem : finishedEdges.keySet()) {
                                 if (finishedEdges.get(elem).getR1() == ID) {
-                                    linkCostArray[finishedEdges.get(elem).getR2() - 1] = elem.getCost();
-                                    linkNameArray[finishedEdges.get(elem).getR2() - 1] = finishedEdges.get(elem).getR2();
+                                    linkCostArray[finishedEdges.get(elem).getR2() -1] = elem.getCost();
+                                    linkNameArray[finishedEdges.get(elem).getR2() -1] = finishedEdges.get(elem).getR2();
                                 } 
                                 else if (finishedEdges.get(elem).getR2() == ID) {
-                                    linkCostArray[finishedEdges.get(elem).getR1() - 1] = elem.getCost();
-                                    linkNameArray[finishedEdges.get(elem).getR1() - 1] = finishedEdges.get(elem).getR1();
+                                    linkCostArray[finishedEdges.get(elem).getR1() -1] = elem.getCost();
+                                    linkNameArray[finishedEdges.get(elem).getR1() -1] = finishedEdges.get(elem).getR1();
                                 }
                             }
                             // add 4 more nodes to complete tree, iterate 4 times
                             for (int j=0; j<4; j++) {
-                                int min = Integer.MAX_VALUE;
-                                int min_index = 0;
+                                int nodeIndex = 0;
+                                int lowerBound = Integer.MAX_VALUE;
 
                                 // choose edge with lowest cost
                                 for (int i = 0; i < 5; i++) {
-                                    if (spanningTree.contains(i + 1)) continue;
-                                    if (linkCostArray[i] <= min) {
-                                        min_index = i;
-                                        min = linkCostArray[i];
+                                    if (spanningTree.contains(i+1)) {
+                                        continue;
+                                    }
+                                    if (linkCostArray[i] <= lowerBound) {
+                                        nodeIndex = i;
+                                        lowerBound = linkCostArray[i];
                                     }
                                 }
-                                spanningTree.add(min_index + 1);
+                                spanningTree.add(nodeIndex + 1);
                                 // update edges
                                 for (link_cost elem : finishedEdges.keySet()) {
                                     int otherRouter;
                                     // find edge attached to newly added router
-                                    if (finishedEdges.get(elem).getR1() == (min_index + 1)) {
+                                    if (finishedEdges.get(elem).getR1() == (nodeIndex + 1)) {
                                         otherRouter = finishedEdges.get(elem).getR2();
                                     } 
-                                    else if (finishedEdges.get(elem).getR2() == (min_index + 1)) {
+                                    else if (finishedEdges.get(elem).getR2() == (nodeIndex + 1)) {
                                         otherRouter = finishedEdges.get(elem).getR1();
                                     } 
                                     else { // if edge is not connected to newly added node, ignore
                                         continue;
                                     }
                                     // check if edge is new
-                                    if (spanningTree.contains(otherRouter) || (linkCostArray[min_index] + elem.getCost()) < 0) continue;
-                                    if (linkCostArray[otherRouter - 1] > linkCostArray[min_index] + elem.getCost()) {
-                                        linkCostArray[otherRouter - 1] = linkCostArray[min_index] + elem.getCost();
-                                        linkNameArray[otherRouter - 1] = linkNameArray[min_index];
+                                    if (spanningTree.contains(otherRouter) || (linkCostArray[nodeIndex] + elem.getCost()) < 0) {
+                                        continue;
+                                    }
+                                    if (linkCostArray[otherRouter-1] > linkCostArray[nodeIndex] + elem.getCost()) {
+                                        linkCostArray[otherRouter-1] = linkCostArray[nodeIndex] + elem.getCost();
+                                        linkNameArray[otherRouter-1] = linkNameArray[nodeIndex];
                                     }
                                 }
                             }
@@ -321,6 +325,8 @@ public class router {
                 break;
             }
         }
+        // end message
+        System.out.println ("R" + ID + " has finished");
     }
 }
 
