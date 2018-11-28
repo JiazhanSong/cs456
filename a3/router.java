@@ -134,14 +134,12 @@ public class router {
         }
 
         log_writer.write("\n# Topology database\n");
-
         for (int i = 0; i<5 && r_db_numlinks[i] !=0 ; i++){
             log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
             log_writer.write(r_db[i]);
         }
         
         log_writer.write("\n# RIB\n");
-
         for (int i = 0; i<5; i++){
             String routerDirection = "R" + stringID + " -> " + "R" + Integer.toString(i+1);
             String output = "Unknown, Unknown";
@@ -204,10 +202,11 @@ public class router {
                             // Dijkstra's algorithm to compute shortest paths with addition of new edge
                             D_costs = new int[5];
                             D_names = new int[5];
-                            ArrayList<Integer> inTree = new ArrayList<Integer>();
-                            
                             Arrays.fill(D_costs, Integer.MAX_VALUE);
                             Arrays.fill(D_names, Integer.MAX_VALUE);
+
+                            ArrayList<Integer> inTree = new ArrayList<Integer>();
+                            
 
                             inTree.add(ID);
                             for (link_cost l : complete_edges.keySet()) {
@@ -223,10 +222,8 @@ public class router {
                             while (inTree.size() < 5) {
                                 int min = Integer.MAX_VALUE;
                                 int min_index = 0; // router index (0-4)
-                                for (int i = 0; i<5; i++){
-                                    if (inTree.contains(min_index + 1)){
-                                        min_index++;
-                                    }
+                                while (inTree.contains(min_index + 1)){
+                                    min_index++;
                                 }
 
                                 for (int i = 0; i < 5; i++) {
@@ -324,6 +321,7 @@ public class router {
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nse_port);
                         receiveSocket.send(hello_response_pkt);
+                        
                         log_writer.write("R" + stringID + " sends an LS PDU: sender " + stringID +
                                           ", ID " + Integer.toString(router) + ", link_id " + Integer.toString(elem.getLink()) +
                                           ", cost " + Integer.toString(elem.getCost()) + ", via " + Integer.toString(rec_hello.getLink_id()));
