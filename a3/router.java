@@ -173,9 +173,9 @@ public class router {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
                 int int1 = buffer.getInt();
                 int int2 = buffer.getInt();
-                int int3 = buffer.getInt();
-                int int4 = buffer.getInt();
-                int int5 = buffer.getInt();
+                int link = buffer.getInt();
+                int cost = buffer.getInt();
+                int via = buffer.getInt();
 
                 // checking if packet is hello packet or lspdu packet
                 if (int3 != 0 || int4 != 0 || int5 != 0) { // if not hello packet
@@ -185,14 +185,12 @@ public class router {
                     message += ", cost " + Integer.toString(rec_lspdu.getCost()) + ", via " + Integer.toString(rec_lspdu.getVia()) + "\n";
                     log_writer.write(message);
 
-                    int link = rec_lspdu.getLink_id();
-                    int via = rec_lspdu.getVia();
-                    int cost = rec_lspdu.getCost();
+
                     link_cost linkcost = new link_cost(link, cost);
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < numlinks; i++) {
-                        // if hello no received, or 
+                        // if hello no received, or already received LS_PDU
                         if (rec_hello_links.contains(local_linkcosts[i].getLink()) || local_linkcosts[i].getLink() == via)
                             continue;
                         pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, local_linkcosts[i].getLink());
