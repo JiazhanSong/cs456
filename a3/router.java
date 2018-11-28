@@ -223,13 +223,11 @@ public class router {
                             for (int j=0; j<4; j++) {
                                 int min = Integer.MAX_VALUE;
                                 int min_index = 0; // router index (0-4)
-                                while (inTree.contains(min_index + 1)){
-                                    min_index++;
-                                }
+
                                 // choose edge with lowest cost
                                 for (int i = 0; i < 5; i++) {
                                     if (inTree.contains(i + 1)) continue;
-                                    if (D_costs[i] < min) {
+                                    if (D_costs[i] <= min) {
                                         min_index = i;
                                         min = D_costs[i];
                                     }
