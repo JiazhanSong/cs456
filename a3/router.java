@@ -61,18 +61,18 @@ public class router {
 
     public static void main(String[] args) throws Exception {
         // reading in command line arguements
-        int router_id = Integer.parseInt(args[0]);
+        int router_id = Integer.valueOf(args[0]);
         String hostname = args[1];
-        int nse_port = Integer.parseInt(args[2]);
-        int router_port = Integer.parseInt(args[3]);
+        int nse_port = Integer.valueOf(args[2]);
+        DatagramSocket receiveSocket = new DatagramSocket(Integer.valueOf(args[3]));
+        InetAddress address = InetAddress.getByName(hostname); // Determines the IP address of a host, given the host's name.
 
-        // clearing old log files
         String filename = "router" + Integer.toString(router_id) + ".log";
-        Path currentRelativePath = Paths.get("");
-        String cur_dir = currentRelativePath.toAbsolutePath().toString();
-        String log_path = cur_dir + "/" + filename;
-        File log = new File(log_path);
-        log.delete();
+        // clean up log file if exists already
+        Path currentRelativePath = Paths.get(""); // from stack overflow to get current working directory
+        String s = currentRelativePath.toAbsolutePath().toString();
+        File log = new File(s + "/" + "router" + Integer.toString(router_id) + ".log");
+        log.delete(); // delete if exists
 
         // general set up
         BufferedWriter log_writer = new BufferedWriter(new FileWriter(filename, true));
@@ -83,10 +83,6 @@ public class router {
         ArrayList<Integer> inTree = null;
         ArrayList<Integer> D_costs = null;
         ArrayList<Integer> D_names = null;
-
-        // setting up address and receive socket
-        InetAddress address = InetAddress.getByName(hostname);
-        DatagramSocket receiveSocket = new DatagramSocket(router_port);
 
         // sending init packet to nse
         pkt_INIT init_pkt = new pkt_INIT(router_id);
