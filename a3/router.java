@@ -106,6 +106,8 @@ public class router {
         log_writer.write("R" + Integer.toString(router_id) + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(numlinks));
         log_writer.newLine();
         for (int i = 0; i<numlinks; i++){
+            log_writer.write(Integer.toString(local_linkcosts[i].getLink()) + "\n");
+            log_writer.write(Integer.toString(local_linkcosts[i].getCost()) + "\n\n\n\n");
             floating_edges.put(local_linkcosts[i], router_id);
         }
 
@@ -200,9 +202,9 @@ public class router {
                             complete_edges.put(linkcost, routers);
 
                             // Dijkstra's algorithm to compute shortest paths with addition of new edge
-                            ArrayList<Integer> inTree = new ArrayList<Integer>();
                             D_costs = new int[5];
                             D_names = new int[5];
+                            ArrayList<Integer> inTree = new ArrayList<Integer>();
                             
                             Arrays.fill(D_costs, Integer.MAX_VALUE);
                             Arrays.fill(D_names, Integer.MAX_VALUE);
@@ -287,11 +289,10 @@ public class router {
                                 output = "R" + Integer.toString(D_names[i]) + ", " + Integer.toString(D_costs[i]);
                             }
                             if ((i+1) == router_id){
-                                log_writer.write(routerDirection + " -> Local, 0");
+                                log_writer.write(routerDirection + " -> Local, 0\n");
                             } else {
-                                log_writer.write(routerDirection + " -> " + output);
+                                log_writer.write(routerDirection + " -> " + output + "\n");
                             }
-                            log_writer.newLine();
                         }
                         log_writer.newLine();
                     }
