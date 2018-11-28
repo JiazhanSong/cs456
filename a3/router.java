@@ -17,15 +17,6 @@ public class router {
         return false;
     }
 
-    public static boolean complete_edges_contains(Map<link_cost, edge> map, link_cost key){
-        for (link_cost l:map.keySet()){
-            if (l.getLink() == key.getLink() && l.getCost() == key.getCost()){
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static int floating_edges_retreive(Map<link_cost, Integer> map, link_cost key){
         int return_val = 0;
         for (link_cost l:map.keySet()){
@@ -196,7 +187,8 @@ public class router {
                     // check if this link is already complete in router's database
                     edge keyCheck = complete_edges.get(linkcost); // returns null if key not in map, otherwise value
                     if (keyCheck == null) { // not a complete edge
-                        if (!floating_edges_contains(floating_edges, linkcost)) { // adding edge to floating edge list
+                        Integer keycheck = floating_edges.get(linkcost); // returns null if key not in map, otherwise value
+                        if (keycheck == null) { // adding edge to floating edge list
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
                         } else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) { // adding edge to complete edge list
                             edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(floating_edges, linkcost));
