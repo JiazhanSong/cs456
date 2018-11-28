@@ -114,7 +114,7 @@ public class router {
         String [] r_db = new String[5];
         Arrays.fill(r_db, "");
         int [] r_db_numlinks = new int[5];
-        Arrays.fill(r_db, 0);
+        Arrays.fill(r_db_numlinks, 0);
         String starter = "R" + stringID + " -> ";
 
         for (link_cost l: newEdges.keySet()){
