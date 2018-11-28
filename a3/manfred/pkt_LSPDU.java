@@ -1,13 +1,13 @@
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ByteBuffer;
 
+// lspdu data class
 public class pkt_LSPDU {
-
-    int sender;
-    int router_id;
-    int link_id;
-    int cost;
-    int via;
+    public int sender;
+    public int router_id;
+    public int link_id;
+    public int cost;
+    public int via;
 
     public pkt_LSPDU(int send, int router, int link, int input_cost, int input_via){
         sender = send;

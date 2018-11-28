@@ -3,11 +3,11 @@ import java.nio.ByteOrder;
 
 public class pkt_LSPDU {
 
-    int sender;
-    int router_id;
-    int link_id;
-    int cost;
-    int via;
+    public int sender;
+    public int router_id;
+    public int link_id;
+    public int cost;
+    public int via;
 
     public pkt_LSPDU(int send, int router, int link, int input_cost, int input_via){
         sender = send;
@@ -15,26 +15,6 @@ public class pkt_LSPDU {
         link_id = link;
         cost = input_cost;
         via = input_via;
-    }
-
-    public int getSender(){
-        return sender;
-    }
-
-    public int getRouter_id(){
-        return router_id;
-    }
-
-    public int getLink_id(){
-        return link_id;
-    }
-
-    public int getCost(){
-        return cost;
-    }
-
-    public int getVia(){
-        return via;
     }
 
     public byte[] getUDPdata() {

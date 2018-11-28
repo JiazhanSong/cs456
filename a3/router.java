@@ -10,7 +10,7 @@ public class router {
     // helper
     public static int getLinkID(link_cost link, Map<link_cost, Integer> hashmap) {
         for (link_cost elem: hashmap.keySet()) {
-            if (elem.getLink() == link.getLink() && elem.getCost() == link.getCost()) {
+            if (elem.getLink() == link.getLink() && elem.cost == link.cost) {
                 return hashmap.get(elem);
             }
         }
@@ -84,7 +84,7 @@ public class router {
             int routerID = incompleteEdges.get(elem);
             int routerIndex = routerID-1;
             printLinkNum[routerIndex]++;
-            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
+            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.cost) + "\n";
         }
 
         bufferedWriter.write("\n# Topology database\n");
@@ -141,9 +141,9 @@ public class router {
 
                 if (link != 0) { // if lspdu, because a pkt_hello will contain zeros for these fields
                     pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(dataArray);
-                    String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(rec_lspdu.getSender());
-                    message += ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", linkID " + Integer.toString(rec_lspdu.getLink_id());
-                    message += ", cost " + Integer.toString(rec_lspdu.getCost()) + ", via " + Integer.toString(rec_lspdu.getVia()) + "\n";
+                    String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(rec_lspdu.sender);
+                    message += ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID " + Integer.toString(rec_lspdu.link_id);
+                    message += ", cost " + Integer.toString(rec_lspdu.cost) + ", via " + Integer.toString(rec_lspdu.via) + "\n";
                     bufferedWriter.write(message);
 
 
@@ -151,7 +151,7 @@ public class router {
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < linkNum; i++) {
-                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, localLinks[i].getLink());
+                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.router_id, link, cost, localLinks[i].getLink());
                         // if bad link (no hello received, don't resend to sender, or already sent before), do not send
                         if (pendingHellos.contains(localLinks[i].getLink()) || localLinks[i].getLink() == via) {
                             continue;
@@ -160,8 +160,8 @@ public class router {
                         // check if already sent
                         boolean flag = false;
                         for (pkt_LSPDU p: sentLS_PDU) {
-                            if (p.getRouter_id() == forward_pkt.getRouter_id() && p.getLink_id() == forward_pkt.getLink_id() &&
-                                p.getCost() == forward_pkt.getCost() && p.getVia() == forward_pkt.getVia()) {
+                            if (p.router_id == forward_pkt.router_id && p.link_id == forward_pkt.link_id &&
+                                p.cost == forward_pkt.cost && p.via == forward_pkt.via) {
                                 flag = true;
                             }
                         }
@@ -173,7 +173,7 @@ public class router {
                         DatagramPacket forward_packet = new DatagramPacket(forward_message, forward_message.length, address, nsePort);
                         UDP_Socket.send(forward_packet);
 
-                        String lspduMessage = "R" + stringID + " sends an ls_PDU: sender " + stringID + ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", linkID ";
+                        String lspduMessage = "R" + stringID + " sends an ls_PDU: sender " + stringID + ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID ";
                         lspduMessage += Integer.toString(link) + ", cost " + Integer.toString(cost) + ", via " + Integer.toString(localLinks[i].getLink()) + "\n";
                         bufferedWriter.write(lspduMessage);
                     }
@@ -182,17 +182,17 @@ public class router {
                     if (keyCheck == null) { // not a complete edge
                         boolean keycheck2 = false;
                         for (link_cost elem: incompleteEdges.keySet()) {
-                            if (elem.getLink() == pktLink.getLink() && elem.getCost() == pktLink.getCost()) {
+                            if (elem.getLink() == pktLink.getLink() && elem.cost == pktLink.cost) {
                                 keycheck2 = true;
                             }
                         }
                         // if not in incomplete edges list, add
                         if (!keycheck2) {
-                            incompleteEdges.put(pktLink, rec_lspdu.getRouter_id());
+                            incompleteEdges.put(pktLink, rec_lspdu.router_id);
                         } // if new edge is complete, add edge to finished edges list
-                        else if (getLinkID(pktLink, incompleteEdges) != rec_lspdu.getRouter_id()) {
-                            edge routers = new edge(rec_lspdu.getRouter_id(), getLinkID(pktLink, incompleteEdges));
-                            incompleteEdges.put(pktLink, rec_lspdu.getRouter_id());
+                        else if (getLinkID(pktLink, incompleteEdges) != rec_lspdu.router_id) {
+                            edge routers = new edge(rec_lspdu.router_id, getLinkID(pktLink, incompleteEdges));
+                            incompleteEdges.put(pktLink, rec_lspdu.router_id);
                             finishedEdges.put(pktLink, routers);
 
                             // Compute one hop for shortest path
@@ -208,11 +208,11 @@ public class router {
                             // add boundary nodes
                             for (link_cost elem : finishedEdges.keySet()) {
                                 if (finishedEdges.get(elem).router1 == ID) {
-                                    linkCostArray[finishedEdges.get(elem).router2 -1] = elem.getCost();
+                                    linkCostArray[finishedEdges.get(elem).router2 -1] = elem.cost;
                                     linkNameArray[finishedEdges.get(elem).router2 -1] = finishedEdges.get(elem).router2;
                                 } 
                                 else if (finishedEdges.get(elem).router2 == ID) {
-                                    linkCostArray[finishedEdges.get(elem).router1 -1] = elem.getCost();
+                                    linkCostArray[finishedEdges.get(elem).router1 -1] = elem.cost;
                                     linkNameArray[finishedEdges.get(elem).router1 -1] = finishedEdges.get(elem).router1;
                                 }
                             }
@@ -246,11 +246,11 @@ public class router {
                                         continue;
                                     }
                                     // check if edge is new
-                                    if (spanningTree.contains(otherRouter) || (linkCostArray[nodeIndex] + elem.getCost()) < 0) {
+                                    if (spanningTree.contains(otherRouter) || (linkCostArray[nodeIndex] + elem.cost) < 0) {
                                         continue;
                                     }
-                                    if (linkCostArray[otherRouter-1] > linkCostArray[nodeIndex] + elem.getCost()) {
-                                        linkCostArray[otherRouter-1] = linkCostArray[nodeIndex] + elem.getCost();
+                                    if (linkCostArray[otherRouter-1] > linkCostArray[nodeIndex] + elem.cost) {
+                                        linkCostArray[otherRouter-1] = linkCostArray[nodeIndex] + elem.cost;
                                         linkNameArray[otherRouter-1] = linkNameArray[nodeIndex];
                                     }
                                 }
@@ -271,7 +271,7 @@ public class router {
                             int routerID = incompleteEdges.get(elem);
                             int routerIndex = routerID-1;
                             printLinkNum[routerIndex]++;
-                            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
+                            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.cost) + "\n";
                         }
 
                         bufferedWriter.write("\n# Topology database\n");
@@ -301,23 +301,23 @@ public class router {
                 } 
                 else { // it is hello packet
                     pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(dataArray);
-                    bufferedWriter.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(rec_hello.getRouter_id()) +
-                                      ", linkID " + Integer.toString(rec_hello.getLink_id()));
+                    bufferedWriter.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(rec_hello.router_id) +
+                                      ", linkID " + Integer.toString(rec_hello.link_id));
                     bufferedWriter.write("\n");
 
                     for (link_cost elem : incompleteEdges.keySet()) { // send each edge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
-                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.getLink(), elem.getCost(), rec_hello.getLink_id());
+                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.getLink(), elem.cost, rec_hello.link_id);
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nsePort);
                         UDP_Socket.send(hello_response_pkt);
                         
                         String helloMsg = "R" + stringID + " sends an ls_PDU: sender " + stringID +", ID " + Integer.toString(routerOfEdge) + ", linkID " + Integer.toString(elem.getLink());
-                        helloMsg += ", cost " + Integer.toString(elem.getCost()) + ", via " + Integer.toString(rec_hello.getLink_id()) + "\n";
+                        helloMsg += ", cost " + Integer.toString(elem.cost) + ", via " + Integer.toString(rec_hello.link_id) + "\n";
                         bufferedWriter.write(helloMsg);
                     }
                     // remove link from pending Hellos
-                    pendingHellos.remove( Integer.valueOf(rec_hello.getLink_id()) );
+                    pendingHellos.remove( Integer.valueOf(rec_hello.link_id) );
                 }
             } catch (SocketTimeoutException e) {
                 // program end
