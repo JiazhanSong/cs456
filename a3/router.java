@@ -81,8 +81,8 @@ public class router {
 
         // general set up
         BufferedWriter log_writer = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
-        Map<link_cost, Integer> newEdges= new HashMap<link_cost,Integer>();
-        Map<link_cost, edge> finishedEdges = new HashMap<link_cost, edge>();
+        Map<link_cost, Integer> floating_edges= new HashMap<link_cost,Integer>();
+        Map<link_cost, edge> complete_edges = new HashMap<link_cost, edge>();
         ArrayList<Integer> rec_hello_links = new ArrayList<Integer>();
         ArrayList<pkt_LSPDU> sent_lspdu = new ArrayList<pkt_LSPDU>();
         ArrayList<Integer> inTree = null;
@@ -93,7 +93,8 @@ public class router {
         log_writer.write("Router " + stringID + " sending INIT to network state emulator");
         log_writer.newLine();
         pkt_INIT init_pkt = new pkt_INIT(ID);
-        DatagramPacket init_packet = new DatagramPacket(init_pkt.getUDPdata(), init_pkt.getUDPdata().length, address, nsePort);
+        byte[] init_message = init_pkt.getUDPdata();
+        DatagramPacket init_packet = new DatagramPacket(init_message, init_message.length, address, nsePort);
         receiveSocket.send(init_packet);
 
         // receive circuit_DB from network state emulator, then store data in members for easy access
@@ -107,35 +108,28 @@ public class router {
         log_writer.write("Router " + stringID + " received circuit_DB with numLinks: " + Integer.toString(numLinks));
         log_writer.newLine();
         for (int i = 0; i<numLinks; i++){
-            newEdges.put(routerLinks[i], ID);
+            floating_edges.put(routerLinks[i], ID);
         }
         
+        // Print initial state
         String [] r_db = new String[5];
-        int [] r_db_numlinks = new int[5];
-        String starter = "R" + Integer.toString(ID) + " -> ";
-        for (int i = 0; i<5; i++){
-            r_db[i] = "";
-            r_db_numlinks[i] = 0;
-        }
-        for (link_cost l: newEdges.keySet()){
-            int db_router = newEdges.get(l);
-            int db_link = l.getLink();
-            int db_cost = l.getCost();
-            r_db_numlinks[db_router-1]++;
-            r_db[db_router-1] += starter;
-            r_db[db_router-1] += ("R" + Integer.toString(db_router) + " link " + Integer.toString(db_link) + " cost " + Integer.toString(db_cost));
-            r_db[db_router-1] += "\n";
+        Arrays.fill(r_db, "");
+        int [] routerLinkCount = new int[5];
+        Arrays.fill(routerLinkCount, 0);
+        String starter = "R" + stringID + " -> ";
+
+        for ( link_cost elem: floating_edges.keySet() ) { // only contains data for itself at the beginning
+            int routerID = floating_edges.get(elem);
+            int routerIndex = routerID-1;
+            routerLinkCount[routerIndex]++;
+            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
         }
 
-        log_writer.newLine();
-        log_writer.write("# Topology database");
-        log_writer.newLine();
-        for (int i = 0; i<5; i++){
-            if (r_db_numlinks[i] != 0){
-                log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]));
-                log_writer.newLine();
-                log_writer.write(r_db[i]);
-            }
+        log_writer.write("\n# Topology database\n");
+
+        for (int i = 0; i<5 && routerLinkCount[i] !=0 ; i++){
+            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(routerLinkCount[i]) + "\n");
+            log_writer.write(r_db[i]);
         }
         log_writer.newLine();
         
@@ -198,8 +192,8 @@ public class router {
                                       ", link_id " + Integer.toString(rec_hello.getLink_id()));
                     log_writer.newLine();
                     rec_hello_links.add(rec_hello.getLink_id());
-                    for (link_cost l : newEdges.keySet()) {
-                        int router = floating_edges_retreive(newEdges, l);
+                    for (link_cost l : floating_edges.keySet()) {
+                        int router = floating_edges_retreive(floating_edges, l);
                         int link = l.getLink();
                         int cost = l.getCost();
                         pkt_LSPDU hello_response = new pkt_LSPDU(ID, router, link, cost, rec_hello.getLink_id());
@@ -223,14 +217,14 @@ public class router {
                     int via = rec_lspdu.getVia();
 
                     // check if this link is already complete in router's database
-                    if (!complete_edges_contains(finishedEdges, linkcost)) { // not a complete edge
-                        if (!floating_edges_contains(newEdges, linkcost)) { // adding edge to floating edge list
-                            newEdges.put(linkcost, rec_lspdu.getRouter_id());
-                        } else if (floating_edges_contains(newEdges, linkcost) &&
-                                (floating_edges_retreive(newEdges, linkcost) != rec_lspdu.getRouter_id())) { // adding edge to complete edge list
-                            edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(newEdges, linkcost));
-                            newEdges.put(linkcost, rec_lspdu.getRouter_id());
-                            finishedEdges.put(linkcost, routers);
+                    if (!complete_edges_contains(complete_edges, linkcost)) { // not a complete edge
+                        if (!floating_edges_contains(floating_edges, linkcost)) { // adding edge to floating edge list
+                            floating_edges.put(linkcost, rec_lspdu.getRouter_id());
+                        } else if (floating_edges_contains(floating_edges, linkcost) &&
+                                (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id())) { // adding edge to complete edge list
+                            edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(floating_edges, linkcost));
+                            floating_edges.put(linkcost, rec_lspdu.getRouter_id());
+                            complete_edges.put(linkcost, routers);
 
                             // Dijkstra's algorithm to compute shortest paths with addition of new edge
                             inTree = new ArrayList<Integer>();
@@ -242,13 +236,13 @@ public class router {
                                 D_names.add(Integer.MAX_VALUE);
                             }
                             inTree.add(ID);
-                            for (link_cost l : finishedEdges.keySet()) {
-                                if (finishedEdges.get(l).router1 == ID) {
-                                    D_costs.set(finishedEdges.get(l).router2 - 1, l.getCost());
-                                    D_names.set(finishedEdges.get(l).router2 - 1, finishedEdges.get(l).router2);
-                                } else if (finishedEdges.get(l).router2 == ID) {
-                                    D_costs.set(finishedEdges.get(l).router1 - 1, l.getCost());
-                                    D_names.set(finishedEdges.get(l).router1 - 1, finishedEdges.get(l).router1);
+                            for (link_cost l : complete_edges.keySet()) {
+                                if (complete_edges.get(l).router1 == ID) {
+                                    D_costs.set(complete_edges.get(l).router2 - 1, l.getCost());
+                                    D_names.set(complete_edges.get(l).router2 - 1, complete_edges.get(l).router2);
+                                } else if (complete_edges.get(l).router2 == ID) {
+                                    D_costs.set(complete_edges.get(l).router1 - 1, l.getCost());
+                                    D_names.set(complete_edges.get(l).router1 - 1, complete_edges.get(l).router1);
                                 }
                             }
 
@@ -269,17 +263,17 @@ public class router {
                                     }
                                 }
                                 inTree.add(min_index + 1); // adding router number to tree (1-5)
-                                for (link_cost l : finishedEdges.keySet()) {
-                                    if (finishedEdges.get(l).router1 == (min_index + 1)) {
-                                        int router2 = finishedEdges.get(l).router2;
+                                for (link_cost l : complete_edges.keySet()) {
+                                    if (complete_edges.get(l).router1 == (min_index + 1)) {
+                                        int router2 = complete_edges.get(l).router2;
                                         if (inTree.contains(router2)) continue;
                                         if (D_costs.get(min_index) + l.getCost() < 0) continue;
                                         if (D_costs.get(router2 - 1) > D_costs.get(min_index) + l.getCost()) {
                                             D_costs.set(router2 - 1, D_costs.get(min_index) + l.getCost());
                                             D_names.set(router2 - 1, D_names.get(min_index));
                                         }
-                                    } else if (finishedEdges.get(l).router2 == (min_index + 1)) {
-                                        int router2 = finishedEdges.get(l).router1;
+                                    } else if (complete_edges.get(l).router2 == (min_index + 1)) {
+                                        int router2 = complete_edges.get(l).router1;
                                         if (inTree.contains(router2)) continue;
                                         if (D_costs.get(min_index) + l.getCost() < 0) continue;
                                         if (D_costs.get(router2 - 1) > D_costs.get(min_index) + l.getCost()) {
@@ -292,32 +286,23 @@ public class router {
                         } else{ // no changes to topology database
                             continue;
                         }
-                        r_db = new String[5];
-        r_db_numlinks = new int[5];
-        for (int i = 0; i<5; i++){
-            r_db[i] = "";
-            r_db_numlinks[i] = 0;
-        }
-        for (link_cost l: newEdges.keySet()){
-            int db_router = newEdges.get(l);
-            int db_link = l.getLink();
-            int db_cost = l.getCost();
-            r_db_numlinks[db_router-1]++;
-            r_db[db_router-1] += starter;
-            r_db[db_router-1] += ("R" + Integer.toString(db_router) + " link " + Integer.toString(db_link) + " cost " + Integer.toString(db_cost));
-            r_db[db_router-1] += "\n";
-        }
+                        // Update arrays
+                        Arrays.fill(r_db, "");
+                        Arrays.fill(routerLinkCount, 0);
+                        for ( link_cost elem: floating_edges.keySet() ) {
+                            int routerID = floating_edges.get(elem);
+                            int routerIndex = routerID-1;
+                            routerLinkCount[routerIndex]++;
+                            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
+                        }
 
-        log_writer.newLine();
-        log_writer.write("# Topology database");
-        log_writer.newLine();
-        for (int i = 0; i<5; i++){
-            if (r_db_numlinks[i] != 0){
-                log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]));
-                log_writer.newLine();
-                log_writer.write(r_db[i]);
-            }
-        }
+                        // Update topology with new info
+                        log_writer.write("\n# Topology database\n");
+                        
+                        for (int i = 0; i<5 && routerLinkCount[i] !=0 ; i++){
+                            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(routerLinkCount[i]) + "\n");
+                            log_writer.write(r_db[i]);
+                        }
                         log_writer.newLine();
 
                         // logging new rib
