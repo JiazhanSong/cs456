@@ -109,8 +109,8 @@ public class router {
             floating_edges.put(local_linkcosts[i], router_id);
         }
 
-        for (int neighbor = 0; neighbor<numlinks; neighbor++) {
-            int linkNum = local_linkcosts[neighbor].getLink();
+        for (link_cost elem: local_linkcosts) {
+            Integer linkNum = elem.getLink();
             rec_hello_links.add(linkNum);
         }
         
