@@ -60,9 +60,10 @@ public class router {
     }
 
     public static void main(String[] args) throws Exception {
-        String [] r_db = new String[5];
-        int [] r_db_numlinks = new int[5];
-        
+        // members
+        link_cost [] local_linkcosts;
+        int numlinks;
+
         // reading in command line arguements
         int router_id = Integer.valueOf(args[0]);
         String hostname = args[1];
@@ -87,7 +88,6 @@ public class router {
         ArrayList<Integer> D_costs = null;
         ArrayList<Integer> D_names = null;
 
-        // sending init packet to nse
         // send init packet to network state emulator containing router id
         log_writer.write("Router " + Integer.toString(router_id) + " sending INIT to network state emulator\n");
         pkt_INIT init_pkt = new pkt_INIT(router_id);
@@ -101,8 +101,8 @@ public class router {
         circuit_DB circuit = circuit_DB.circuit_parseUDPdata(receiveData);
 
         // adding circuit_db data to local router's database
-        link_cost [] local_linkcosts = circuit.getLinkcost();
-        int numlinks = circuit.getNum_links();
+        numlinks = circuit.getNum_links();
+        local_linkcosts = circuit.getLinkcost();
         log_writer.write("R" + Integer.toString(router_id) + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(numlinks));
         log_writer.newLine();
         for (int i = 0; i<numlinks; i++){
@@ -110,11 +110,12 @@ public class router {
         }
         
         // logging initial topology/rib
+        String [] r_db = new String[5];
+        Arrays.fill(r_db, "");
+        int [] r_db_numlinks = new int[5];
+        Arrays.fill(r_db_numlinks, 0);
         String starter = "R" + Integer.toString(router_id) + " -> ";
-        for (int i = 0; i<5; i++){
-            r_db[i] = "";
-            r_db_numlinks[i] = 0;
-        }
+        
         for (link_cost l: floating_edges.keySet()){
             int db_router = floating_edges.get(l);
             int db_link = l.getLink();
@@ -292,10 +293,8 @@ public class router {
                         }
                         r_db = new String[5];
                         r_db_numlinks = new int[5];
-                        for (int i = 0; i<5; i++){
-                            r_db[i] = "";
-                            r_db_numlinks[i] = 0;
-                        }
+                        Arrays.fill(r_db, "");
+                        Arrays.fill(r_db_numlinks, 0);
                         for (link_cost l: floating_edges.keySet()){
                             int db_router = floating_edges.get(l);
                             int db_link = l.getLink();
