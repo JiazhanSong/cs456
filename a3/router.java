@@ -54,7 +54,7 @@ public class router {
         UDP_Socket.send(init_packet);
 
         // receive circuit data, containing all local edges
-        byte[] dataArray = new byte[1024];
+        byte[] dataArray = new byte[562];
         DatagramPacket receivePacket = new DatagramPacket(dataArray, dataArray.length);
         UDP_Socket.receive(receivePacket);
 
@@ -123,7 +123,7 @@ public class router {
 
         while (true) {
             try {
-                dataArray=new byte[1024];
+                dataArray=new byte[562];
                 receivePacket= new DatagramPacket(dataArray, dataArray.length);
                 UDP_Socket.setSoTimeout(1500);
                 UDP_Socket.receive(receivePacket);
