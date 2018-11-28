@@ -108,6 +108,11 @@ public class router {
         for (int i = 0; i<numlinks; i++){
             floating_edges.put(local_linkcosts[i], router_id);
         }
+
+        for (link_cost elem: local_linkcosts) {
+            int linkNum = elem.getLink();
+            rec_hello_links.add(linkNum);
+        }
         
         // logging initial topology/rib
         String [] r_db = new String[5];
@@ -314,7 +319,7 @@ public class router {
 
                     // forwarding ls_pdu to all neighbours
                     for (int i = 0; i < numlinks; i++) {
-                        if (local_linkcosts[i].getLink() == via || !(rec_hello_links.contains(local_linkcosts[i].getLink())))
+                        if (local_linkcosts[i].getLink() == via || rec_hello_links.contains(local_linkcosts[i].getLink()))
                             continue;
                         pkt_LSPDU forward_pkt = new pkt_LSPDU(router_id, rec_lspdu.getRouter_id(), link, cost, local_linkcosts[i].getLink());
                         if (check_lspdu(sent_lspdu, forward_pkt)) continue;
@@ -329,7 +334,7 @@ public class router {
                     }
                 } else { // if it is hello packet
                     pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
-                    rec_hello_links.add(rec_hello.getLink_id());
+                    rec_hello_links.remove( Integer.valueOf(rec_hello.getLink_id()) );
                     log_writer.write("R" + Integer.toString(router_id) + " receives a HELLO: router_id " + Integer.toString(rec_hello.getRouter_id()) +
                                       ", link_id " + Integer.toString(rec_hello.getLink_id()));
                     log_writer.newLine();
