@@ -143,9 +143,6 @@ public class router {
         for (int i = 0; i<5; i++){
             String routerDirection = "R" + Integer.toString(router_id) + " -> " + "R" + Integer.toString(i+1);
             String output = "Unknown, Unknown";
-            if (D_names != null && D_names[i] != Integer.MAX_VALUE){
-                output = "R" + Integer.toString(D_names[i]) + ", " + Integer.toString(D_costs[i]);
-            }
             if (router_id == (i+1)){
                 log_writer.write(routerDirection + " -> Local, 0");
             } else {
@@ -284,25 +281,17 @@ public class router {
                         log_writer.write("\n# RIB\n");
 
                         for (int i = 0; i<5; i++){
-                            String router_from = "R" + Integer.toString(router_id);
-                            String router_to = "R" + Integer.toString(i+1);
-                            String dname = "";
-                            String dcost = "";
-                            if (D_names == null || D_names[i] == Integer.MAX_VALUE){
-                                dname = "INF";
-                            } else {
-                                dname = "R" + Integer.toString(D_names[i]);
-                            }
-                            if (D_costs == null || D_costs[i] == Integer.MAX_VALUE){
-                                dcost = "INF";
-                            } else {
-                                dcost = Integer.toString(D_costs[i]);
+                            String routerDirection = "R" + Integer.toString(router_id) + " -> " + "R" + Integer.toString(i+1);
+                            String output = "Unknown, Unknown";
+                            if (D_names != null && D_names[i] != Integer.MAX_VALUE){
+                                output = "R" + Integer.toString(D_names[i]) + ", " + Integer.toString(D_costs[i]);
                             }
                             if (router_id == (i+1)){
-                                log_writer.write(router_from + " -> " + router_to + " -> Local, 0");
+                                log_writer.write(routerDirection + " -> Local, 0");
                             } else {
-                                log_writer.write(router_from + " -> " + router_to + " -> " + dname + ", " + dcost);
+                                log_writer.write(routerDirection + " -> " + output);
                             }
+                            log_writer.newLine();
                             log_writer.newLine();
                         }
                         log_writer.newLine();
