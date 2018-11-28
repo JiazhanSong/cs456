@@ -130,7 +130,7 @@ public class router {
             int routerID = floating_edges.get(elem);
             int routerIndex = routerID-1;
             r_db_numlinks[routerIndex]++;
-            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
+            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
         }
 
         log_writer.write("\n# Topology database\n");
@@ -207,8 +207,9 @@ public class router {
 
                             ArrayList<Integer> inTree = new ArrayList<Integer>();
                             
-
+                            // add root for Djikstras
                             inTree.add(ID);
+                            // add boundary nodes
                             for (link_cost l : complete_edges.keySet()) {
                                 if (complete_edges.get(l).getR1() == ID) {
                                     D_costs[complete_edges.get(l).getR2() - 1] = l.getCost();
@@ -218,14 +219,14 @@ public class router {
                                     D_names[complete_edges.get(l).getR1() - 1] = complete_edges.get(l).getR1();
                                 }
                             }
-
-                            while (inTree.size() < 5) {
+                            // add 4 more nodes to complete tree, iterate 4 times
+                            for (int j=0; j<4; j++) {
                                 int min = Integer.MAX_VALUE;
                                 int min_index = 0; // router index (0-4)
                                 while (inTree.contains(min_index + 1)){
                                     min_index++;
                                 }
-
+                                // choose edge with lowest cost
                                 for (int i = 0; i < 5; i++) {
                                     if (inTree.contains(i + 1)) continue;
                                     if (D_costs[i] < min) {
@@ -233,24 +234,25 @@ public class router {
                                         min = D_costs[i];
                                     }
                                 }
-                                inTree.add(min_index + 1); // adding router number to tree (1-5)
+                                inTree.add(min_index + 1);
+                                // update edges
                                 for (link_cost l : complete_edges.keySet()) {
+                                    int otherRouter;
+                                    // find edge attached to newly added router
                                     if (complete_edges.get(l).getR1() == (min_index + 1)) {
-                                        int router2 = complete_edges.get(l).getR2();
-                                        if (inTree.contains(router2)) continue;
-                                        if (D_costs[min_index] + l.getCost() < 0) continue;
-                                        if (D_costs[router2 - 1] > D_costs[min_index] + l.getCost()) {
-                                            D_costs[router2 - 1] = D_costs[min_index] + l.getCost();
-                                            D_names[router2 - 1] = D_names[min_index];
-                                        }
-                                    } else if (complete_edges.get(l).getR2() == (min_index + 1)) {
-                                        int router2 = complete_edges.get(l).getR1();
-                                        if (inTree.contains(router2)) continue;
-                                        if (D_costs[min_index] + l.getCost() < 0) continue;
-                                        if (D_costs[router2 - 1] > D_costs[min_index] + l.getCost()) {
-                                            D_costs[router2 - 1] = D_costs[min_index] + l.getCost();
-                                            D_names[router2 - 1] = D_names[min_index];
-                                        }
+                                        otherRouter = complete_edges.get(l).getR2();
+                                    } 
+                                    else if (complete_edges.get(l).getR2() == (min_index + 1)) {
+                                        otherRouter = complete_edges.get(l).getR1();
+                                    } 
+                                    else { // if edge is not connected to newly added node, ignore
+                                        continue;
+                                    }
+                                    // check if edge is new
+                                    if (inTree.contains(otherRouter) || (D_costs[min_index] + l.getCost()) < 0) continue;
+                                    if (D_costs[otherRouter - 1] > D_costs[min_index] + l.getCost()) {
+                                        D_costs[otherRouter - 1] = D_costs[min_index] + l.getCost();
+                                        D_names[otherRouter - 1] = D_names[min_index];
                                     }
                                 }
                             }
@@ -265,7 +267,7 @@ public class router {
                             int routerID = floating_edges.get(elem);
                             int routerIndex = routerID-1;
                             r_db_numlinks[routerIndex]++;
-                            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
+                            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.getCost()) + "\n";
                         }
 
                         // logging new topology database
@@ -279,13 +281,14 @@ public class router {
                         // logging new rib
                         log_writer.write("\n# RIB\n");
 
-                        for (int i = 0; i<5; i++){
-                            String routerDirection = "R" + stringID + " -> " + "R" + Integer.toString(i+1);
+                        for (int i = 0; i<5; i++) {
+                            int currentID = i + 1;
+                            String routerDirection = "R" + stringID + " -> " + "R" + Integer.toString(currentID);
                             String output = "Unknown, Unknown";
                             if (D_names != null && D_names[i] != Integer.MAX_VALUE){
                                 output = "R" + Integer.toString(D_names[i]) + ", " + Integer.toString(D_costs[i]);
                             }
-                            if ((i+1) == ID){
+                            if (currentID == ID){
                                 log_writer.write(routerDirection + " -> Local, 0\n");
                             } else {
                                 log_writer.write(routerDirection + " -> " + output + "\n");
