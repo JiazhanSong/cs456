@@ -110,25 +110,32 @@ public class router {
             newEdges.put(routerLinks[i], ID);
         }
         
-        // Print initial state
         String [] r_db = new String[5];
-        Arrays.fill(r_db, "");
-        int [] routerLinkCount = new int[5];
-        Arrays.fill(routerLinkCount, 0);
-        String starter = "R" + stringID + " -> ";
-
-        for ( link_cost elem: newEdges.keySet() ) { // only contains data for itself at the beginning
-            int routerID = newEdges.get(elem);
-            int routerIndex = routerID-1;
-            routerLinkCount[routerIndex]++;
-            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
+        int [] r_db_numlinks = new int[5];
+        String starter = "R" + Integer.toString(ID) + " -> ";
+        for (int i = 0; i<5; i++){
+            r_db[i] = "";
+            r_db_numlinks[i] = 0;
+        }
+        for (link_cost l: newEdges.keySet()){
+            int db_router = newEdges.get(l);
+            int db_link = l.getLink();
+            int db_cost = l.getCost();
+            r_db_numlinks[db_router-1]++;
+            r_db[db_router-1] += starter;
+            r_db[db_router-1] += ("R" + Integer.toString(db_router) + " link " + Integer.toString(db_link) + " cost " + Integer.toString(db_cost));
+            r_db[db_router-1] += "\n";
         }
 
-        log_writer.write("\n# Topology database\n");
-
-        for (int i = 0; i<5 && routerLinkCount[i] !=0 ; i++){
-            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(routerLinkCount[i]) + "\n");
-            log_writer.write(r_db[i]);
+        log_writer.newLine();
+        log_writer.write("# Topology database");
+        log_writer.newLine();
+        for (int i = 0; i<5; i++){
+            if (r_db_numlinks[i] != 0){
+                log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]));
+                log_writer.newLine();
+                log_writer.write(r_db[i]);
+            }
         }
         log_writer.newLine();
         
@@ -285,23 +292,32 @@ public class router {
                         } else{ // no changes to topology database
                             continue;
                         }
-                        // Update arrays
-                        Arrays.fill(r_db, "");
-                        Arrays.fill(routerLinkCount, 0);
-                        for ( link_cost elem: newEdges.keySet() ) {
-                            int routerID = newEdges.get(elem);
-                            int routerIndex = routerID-1;
-                            routerLinkCount[routerIndex]++;
-                            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
-                        }
+                        r_db = new String[5];
+        r_db_numlinks = new int[5];
+        for (int i = 0; i<5; i++){
+            r_db[i] = "";
+            r_db_numlinks[i] = 0;
+        }
+        for (link_cost l: newEdges.keySet()){
+            int db_router = newEdges.get(l);
+            int db_link = l.getLink();
+            int db_cost = l.getCost();
+            r_db_numlinks[db_router-1]++;
+            r_db[db_router-1] += starter;
+            r_db[db_router-1] += ("R" + Integer.toString(db_router) + " link " + Integer.toString(db_link) + " cost " + Integer.toString(db_cost));
+            r_db[db_router-1] += "\n";
+        }
 
-                        // Update topology with new info
-                        log_writer.write("\n# Topology database\n");
-                        
-                        for (int i = 0; i<5 && routerLinkCount[i] !=0 ; i++){
-                            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(routerLinkCount[i]) + "\n");
-                            log_writer.write(r_db[i]);
-                        }
+        log_writer.newLine();
+        log_writer.write("# Topology database");
+        log_writer.newLine();
+        for (int i = 0; i<5; i++){
+            if (r_db_numlinks[i] != 0){
+                log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]));
+                log_writer.newLine();
+                log_writer.write(r_db[i]);
+            }
+        }
                         log_writer.newLine();
 
                         // logging new rib
