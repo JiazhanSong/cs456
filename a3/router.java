@@ -93,15 +93,14 @@ public class router {
         log_writer.write("Router " + stringID + " sending INIT to network state emulator");
         log_writer.newLine();
         pkt_INIT init_pkt = new pkt_INIT(ID);
-        byte[] init_message = init_pkt.getUDPdata();
-        DatagramPacket init_packet = new DatagramPacket(init_message, init_message.length, address, nsePort);
+        DatagramPacket init_packet = new DatagramPacket(init_pkt.getUDPdata(), init_pkt.getUDPdata().length, address, nsePort);
         receiveSocket.send(init_packet);
 
         // receive circuit_DB from network state emulator, then store data in members for easy access
-        byte[] circuitData = new byte[1024];
-        DatagramPacket tempPacket = new DatagramPacket(circuitData,circuitData.length);
+        byte[] receiveData = new byte[1024];
+        DatagramPacket tempPacket = new DatagramPacket(receiveData,receiveData.length);
         receiveSocket.receive(tempPacket); // receive data into bye array
-        circuit_DB circuit = circuit_DB.circuit_parseUDPdata(circuitData);
+        circuit_DB circuit = circuit_DB.circuit_parseUDPdata(receiveData);
 
         numLinks = circuit.nbr_link;
         routerLinks = circuit.linkcost;
@@ -113,23 +112,31 @@ public class router {
         
         // Print initial state
         String [] r_db = new String[5];
-        Arrays.fill(r_db, "");
-        int [] routerLinkCount = new int[5];
-        Arrays.fill(routerLinkCount, 0);
-        String starter = "R" + stringID + " -> ";
-
-        for ( link_cost elem: floating_edges.keySet() ) { // only contains data for itself at the beginning
-            int routerID = floating_edges.get(elem);
-            int routerIndex = routerID-1;
-            routerLinkCount[routerIndex]++;
-            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
+        int [] r_db_numlinks = new int[5];
+        String starter = "R" + Integer.toString(router_id) + " -> ";
+        for (int i = 0; i<5; i++){
+            r_db[i] = "";
+            r_db_numlinks[i] = 0;
+        }
+        for (link_cost l: floating_edges.keySet()){
+            int db_router = floating_edges.get(l);
+            int db_link = l.getLink();
+            int db_cost = l.getCost();
+            r_db_numlinks[db_router-1]++;
+            r_db[db_router-1] += starter;
+            r_db[db_router-1] += ("R" + Integer.toString(db_router) + " link " + Integer.toString(db_link) + " cost " + Integer.toString(db_cost));
+            r_db[db_router-1] += "\n";
         }
 
-        log_writer.write("\n# Topology database\n");
-
-        for (int i = 0; i<5 && routerLinkCount[i] !=0 ; i++){
-            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(routerLinkCount[i]) + "\n");
-            log_writer.write(r_db[i]);
+        log_writer.newLine();
+        log_writer.write("# Topology database");
+        log_writer.newLine();
+        for (int i = 0; i<5; i++){
+            if (r_db_numlinks[i] != 0){
+                log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]));
+                log_writer.newLine();
+                log_writer.write(r_db[i]);
+            }
         }
         log_writer.newLine();
         
@@ -173,11 +180,11 @@ public class router {
         // receiving LS_PDUs & HELLOs from neighbours
         while(true) {
             try {
-                circuitData = new byte[1024];
-                DatagramPacket receivePacket = new DatagramPacket(circuitData, circuitData.length);
+                receiveData = new byte[1024];
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 receiveSocket.setSoTimeout(2000);
                 receiveSocket.receive(receivePacket);
-                ByteBuffer buffer = ByteBuffer.wrap(circuitData);
+                ByteBuffer buffer = ByteBuffer.wrap(receiveData);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
                 int int1 = buffer.getInt();
                 int int2 = buffer.getInt();
@@ -187,7 +194,7 @@ public class router {
 
                 // checking if packet is hello packet or lspdu packet
                 if (int3 == int4 && int4 == int5 && int5 == 0) { // hello packet: send lspdu packets back to sender of hello packet
-                    pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(circuitData);
+                    pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
                     log_writer.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(rec_hello.getRouter_id()) +
                                       ", link_id " + Integer.toString(rec_hello.getLink_id()));
                     log_writer.newLine();
@@ -206,7 +213,7 @@ public class router {
                         log_writer.newLine();
                     }
                 } else if (int3 != 0 || int4 != 0 || int5 != 0) { // lspdu packet: update database, forward to neighbours
-                    pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(circuitData);
+                    pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(receiveData);
                     log_writer.write("R" + stringID + " receives an LS PDU: sender " + Integer.toString(rec_lspdu.getSender()) +
                                       ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(rec_lspdu.getLink_id()) +
                                       ", cost " + Integer.toString(rec_lspdu.getCost()) + ", via " + Integer.toString(rec_lspdu.getVia()));
@@ -287,21 +294,32 @@ public class router {
                             continue;
                         }
                         // Update arrays
-                        Arrays.fill(r_db, "");
-                        Arrays.fill(routerLinkCount, 0);
-                        for ( link_cost elem: floating_edges.keySet() ) {
-                            int routerID = floating_edges.get(elem);
-                            int routerIndex = routerID-1;
-                            routerLinkCount[routerIndex]++;
-                            r_db[routerIndex] += starter + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost-" + Integer.toString(elem.getCost()) + "\n";
+                        r_db = new String[5];
+                        r_db_numlinks = new int[5];
+                        for (int i = 0; i<5; i++){
+                            r_db[i] = "";
+                            r_db_numlinks[i] = 0;
+                        }
+                        for (link_cost l: floating_edges.keySet()){
+                            int db_router = floating_edges.get(l);
+                            int db_link = l.getLink();
+                            int db_cost = l.getCost();
+                            r_db_numlinks[db_router-1]++;
+                            r_db[db_router-1] += starter;
+                            r_db[db_router-1] += ("R" + Integer.toString(db_router) + " link " + Integer.toString(db_link) + " cost " + Integer.toString(db_cost));
+                            r_db[db_router-1] += "\n";
                         }
 
-                        // Update topology with new info
-                        log_writer.write("\n# Topology database\n");
-                        
-                        for (int i = 0; i<5 && routerLinkCount[i] !=0 ; i++){
-                            log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(routerLinkCount[i]) + "\n");
-                            log_writer.write(r_db[i]);
+                        // logging new topology database
+                        log_writer.newLine();
+                        log_writer.write("# Topology database");
+                        log_writer.newLine();
+                        for (int i = 0; i<5; i++){
+                            if (r_db_numlinks[i] != 0){
+                                log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]));
+                                log_writer.newLine();
+                                log_writer.write(r_db[i]);
+                            }
                         }
                         log_writer.newLine();
 
