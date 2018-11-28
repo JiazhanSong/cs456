@@ -8,8 +8,8 @@ import java.nio.file.Paths;
 
 public class router {
     // members
-    int numLinks;
-    link_cost [] routerLinkcosts;
+    public int numLinks;
+    public link_cost [] routerLinkcosts;
 
     public static boolean floating_edges_contains(Map<link_cost, Integer> map, link_cost key){
         for (link_cost l:map.keySet()){
