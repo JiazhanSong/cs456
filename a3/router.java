@@ -16,15 +16,6 @@ public class router {
         return 0;
     }
 
-    public static boolean check_lspdu(pkt_LSPDU pkt, ArrayList<pkt_LSPDU> pktlist){
-        for (pkt_LSPDU p: pktlist){
-            if (p.getRouter_id() == pkt.getRouter_id() && p.getLink_id() == pkt.getLink_id() && p.getCost() == pkt.getCost() 
-                && p.getVia() == pkt.getVia()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public static void main(String[] args) throws Exception {
         // members
@@ -158,10 +149,19 @@ public class router {
                     for (int i = 0; i < numlinks; i++) {
                         pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, local_linkcosts[i].getLink());
                         // if bad link (no hello received, don't resend to sender, or already sent before), do not send
-                        if (rec_hello_links.contains(local_linkcosts[i].getLink()) || local_linkcosts[i].getLink() == via ||
-                            check_lspdu(forward_pkt, sent_lspdu)) {
+                        if (rec_hello_links.contains(local_linkcosts[i].getLink()) || local_linkcosts[i].getLink() == via) {
                             continue;
                         }
+                        // check if already sent
+                        boolean flag = false;
+                        for (pkt_LSPDU p: sent_lspdu){
+                            if (p.getRouter_id() == forward_pkt.getRouter_id() && p.getLink_id() == forward_pkt.getLink_id() &&
+                                p.getCost() == forward_pkt.getCost() && p.getVia() == forward_pkt.getVia()) {
+                                flag = true;
+                            }
+                        }
+                        if (flag) continue; // if already sent, continue
+
                         // send new LS_PDU
                         sent_lspdu.add(forward_pkt);
                         byte[] forward_message = forward_pkt.getUDPdata();
