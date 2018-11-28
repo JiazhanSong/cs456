@@ -1,10 +1,10 @@
-import java.io.*;
 import java.net.*;
+import java.io.*;
+import java.util.*;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class router {
     // helper
@@ -207,13 +207,13 @@ public class router {
                             spanningTree.add(ID);
                             // add boundary nodes
                             for (link_cost elem : finishedEdges.keySet()) {
-                                if (finishedEdges.get(elem).getR1() == ID) {
-                                    linkCostArray[finishedEdges.get(elem).getR2() -1] = elem.getCost();
-                                    linkNameArray[finishedEdges.get(elem).getR2() -1] = finishedEdges.get(elem).getR2();
+                                if (finishedEdges.get(elem).router1 == ID) {
+                                    linkCostArray[finishedEdges.get(elem).router2 -1] = elem.getCost();
+                                    linkNameArray[finishedEdges.get(elem).router2 -1] = finishedEdges.get(elem).router2;
                                 } 
-                                else if (finishedEdges.get(elem).getR2() == ID) {
-                                    linkCostArray[finishedEdges.get(elem).getR1() -1] = elem.getCost();
-                                    linkNameArray[finishedEdges.get(elem).getR1() -1] = finishedEdges.get(elem).getR1();
+                                else if (finishedEdges.get(elem).router2 == ID) {
+                                    linkCostArray[finishedEdges.get(elem).router1 -1] = elem.getCost();
+                                    linkNameArray[finishedEdges.get(elem).router1 -1] = finishedEdges.get(elem).router1;
                                 }
                             }
                             // add 4 more nodes to complete tree, iterate 4 times
@@ -236,11 +236,11 @@ public class router {
                                 for (link_cost elem : finishedEdges.keySet()) {
                                     int otherRouter;
                                     // find edge attached to newly added router
-                                    if (finishedEdges.get(elem).getR1() == (nodeIndex + 1)) {
-                                        otherRouter = finishedEdges.get(elem).getR2();
+                                    if (finishedEdges.get(elem).router1 == (nodeIndex + 1)) {
+                                        otherRouter = finishedEdges.get(elem).router2;
                                     } 
-                                    else if (finishedEdges.get(elem).getR2() == (nodeIndex + 1)) {
-                                        otherRouter = finishedEdges.get(elem).getR1();
+                                    else if (finishedEdges.get(elem).router2 == (nodeIndex + 1)) {
+                                        otherRouter = finishedEdges.get(elem).router1;
                                     } 
                                     else { // if edge is not connected to newly added node, ignore
                                         continue;
