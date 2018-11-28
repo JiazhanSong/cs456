@@ -89,7 +89,7 @@ public class router {
         ArrayList<Integer> D_names = null;
 
         // send init packet to network state emulator containing router id
-        log_writer.write("Router " + stringID + " sending INIT to network state emulator";
+        log_writer.write("Router " + stringID + " sending INIT to network state emulator");
         log_writer.newLine();
         pkt_INIT init_pkt = new pkt_INIT(ID);
         DatagramPacket init_packet = new DatagramPacket(init_pkt.getUDPdata(), init_pkt.getUDPdata().length, address, nsePort);
