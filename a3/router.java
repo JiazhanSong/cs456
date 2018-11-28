@@ -178,7 +178,7 @@ public class router {
                 int via = buffer.getInt();
 
                 // checking if packet is hello packet or lspdu packet
-                if (int3 != 0 || int4 != 0 || int5 != 0) { // if not hello packet
+                if (link != 0 || cost != 0 || via != 0) { // if lspdu, because hello will contain zeros
                     pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(receiveData);
                     String message = "R" + stringID + " receives an LS PDU: sender " + Integer.toString(rec_lspdu.getSender());
                     message += ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(rec_lspdu.getLink_id());
