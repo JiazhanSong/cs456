@@ -181,7 +181,7 @@ public class router {
         while(true) {
             try {
                 circuitData = new byte[1024];
-                Datagrampacket receivePacket = new DatagramPacket(circuitData, circuitData.length);
+                DatagramPacket receivePacket = new DatagramPacket(circuitData, circuitData.length);
                 receiveSocket.setSoTimeout(2000);
                 receiveSocket.receive(receivePacket);
                 ByteBuffer buffer = ByteBuffer.wrap(circuitData);
