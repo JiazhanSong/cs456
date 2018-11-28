@@ -131,10 +131,9 @@ public class router {
             log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
             log_writer.write(r_db[i]);
         }
-        log_writer.newLine();
         
-        log_writer.write("# RIB");
-        log_writer.newLine();
+        log_writer.write("\n# RIB\n");
+
         for (int i = 0; i<5; i++){
             String router_from = "R" + Integer.toString(router_id);
             String router_to = "R" + Integer.toString(i+1);
@@ -160,18 +159,17 @@ public class router {
         log_writer.newLine();
 
         // sending hello packets to router's neighbours
-        for (int i = 0; i<numlinks; i++){
-            pkt_HELLO hello_pkt = new pkt_HELLO(router_id, local_linkcosts[i].getLink());
-            byte[] hello_message = hello_pkt.getUDPdata();
-            DatagramPacket hello_packet = new DatagramPacket(hello_message, hello_message.length, address, nse_port);
-            receiveSocket.send(hello_packet);
+        for (int neighbor = 0; neighbor<numlinks; neighbor++){
             log_writer.write("R" + Integer.toString(router_id) + " sends a HELLO: router_id " + Integer.toString(router_id) +
-                              ", link_id " + Integer.toString(local_linkcosts[i].getLink()));
+                              ", link_id " + Integer.toString(local_linkcosts[neighbor].getLink()));
             log_writer.newLine();
+            pkt_HELLO hello_pkt = new pkt_HELLO(router_id, local_linkcosts[neighbor].getLink());
+            DatagramPacket hello_packet = new DatagramPacket(hello_pkt.getUDPdata(), hello_pkt.getUDPdata().length, address, nse_port);
+            receiveSocket.send(hello_packet);
         }
 
         // receiving LS_PDUs & HELLOs from neighbours
-        while(true) {
+        while ( true ) {
             try {
                 receiveData = new byte[1024];
                 receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -186,26 +184,7 @@ public class router {
                 int int5 = buffer.getInt();
 
                 // checking if packet is hello packet or lspdu packet
-                if (int3 == int4 && int4 == int5 && int5 == 0) { // hello packet: send lspdu packets back to sender of hello packet
-                    pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
-                    log_writer.write("R" + Integer.toString(router_id) + " receives a HELLO: router_id " + Integer.toString(rec_hello.getRouter_id()) +
-                                      ", link_id " + Integer.toString(rec_hello.getLink_id()));
-                    log_writer.newLine();
-                    rec_hello_links.add(rec_hello.getLink_id());
-                    for (link_cost l : floating_edges.keySet()) {
-                        int router = floating_edges_retreive(floating_edges, l);
-                        int link = l.getLink();
-                        int cost = l.getCost();
-                        pkt_LSPDU hello_response = new pkt_LSPDU(router_id, router, link, cost, rec_hello.getLink_id());
-                        byte[] hello_res = hello_response.getUDPdata();
-                        DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nse_port);
-                        receiveSocket.send(hello_response_pkt);
-                        log_writer.write("R" + Integer.toString(router_id) + " sends an LS PDU: sender " + Integer.toString(router_id) +
-                                          ", router_id " + Integer.toString(router) + ", link_id " + Integer.toString(link) +
-                                          ", cost " + Integer.toString(cost) + ", via " + Integer.toString(rec_hello.getLink_id()));
-                        log_writer.newLine();
-                    }
-                } else if (int3 != 0 || int4 != 0 || int5 != 0) { // lspdu packet: update database, forward to neighbours
+                if (int3 != 0 || int4 != 0 || int5 != 0) { // if not hello packet
                     pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(receiveData);
                     log_writer.write("R" + Integer.toString(router_id) + " receives an LS PDU: sender " + Integer.toString(rec_lspdu.getSender()) +
                                       ", router_id " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(rec_lspdu.getLink_id()) +
@@ -304,11 +283,10 @@ public class router {
                             log_writer.write(starter + "R" + Integer.toString(i+1) + " nbr link " + Integer.toString(r_db_numlinks[i]) + "\n");
                             log_writer.write(r_db[i]);
                         }
-                        log_writer.newLine();
 
                         // logging new rib
-                        log_writer.write("# RIB");
-                        log_writer.newLine();
+                        log_writer.write("\n# RIB\n");
+
                         for (int i = 0; i<5; i++){
                             String router_from = "R" + Integer.toString(router_id);
                             String router_to = "R" + Integer.toString(i+1);
@@ -349,6 +327,26 @@ public class router {
                                 ", cost " + Integer.toString(cost) + ", via " + Integer.toString(local_linkcosts[i].getLink()));
                         log_writer.newLine();
                     }
+                } else { // lspdu packet: update database, forward to neighbours
+                    pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
+                    log_writer.write("R" + Integer.toString(router_id) + " receives a HELLO: router_id " + Integer.toString(rec_hello.getRouter_id()) +
+                                      ", link_id " + Integer.toString(rec_hello.getLink_id()));
+                    log_writer.newLine();
+                    rec_hello_links.add(rec_hello.getLink_id());
+                    for (link_cost l : floating_edges.keySet()) {
+                        int router = floating_edges_retreive(floating_edges, l);
+                        int link = l.getLink();
+                        int cost = l.getCost();
+                        pkt_LSPDU hello_response = new pkt_LSPDU(router_id, router, link, cost, rec_hello.getLink_id());
+                        byte[] hello_res = hello_response.getUDPdata();
+                        DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nse_port);
+                        receiveSocket.send(hello_response_pkt);
+                        log_writer.write("R" + Integer.toString(router_id) + " sends an LS PDU: sender " + Integer.toString(router_id) +
+                                          ", router_id " + Integer.toString(router) + ", link_id " + Integer.toString(link) +
+                                          ", cost " + Integer.toString(cost) + ", via " + Integer.toString(rec_hello.getLink_id()));
+                        log_writer.newLine();
+                    }
+                    
                 }
             } catch (SocketTimeoutException e){
                 break;
