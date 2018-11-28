@@ -112,12 +112,11 @@ public class router {
         
         // logging initial topology/rib
         String [] r_db = new String[5];
+        Arrays.fill(r_db, "");
         int [] r_db_numlinks = new int[5];
+        Arrays.fill(r_db, 0);
         String starter = "R" + stringID + " -> ";
-        for (int i = 0; i<5; i++){
-            r_db[i] = "";
-            r_db_numlinks[i] = 0;
-        }
+
         for (link_cost l: newEdges.keySet()){
             int db_router = newEdges.get(l);
             int db_link = l.getLink();
