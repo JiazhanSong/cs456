@@ -36,24 +36,12 @@ public class router {
         return return_val;
     }
 
-    public static edge complete_edges_retreive(Map<link_cost, edge> map, link_cost key){
-        edge return_val = null;
-        for (link_cost l:map.keySet()){
-            if (l.getLink() == key.getLink() && l.getCost() == key.getCost()){
-//                edge map_edge = map.get(l);
-//                return_val = new edge(map_edge.getR1(), map_edge.getR2());
-                return_val = map.get(l);
-            }
-        }
-        return return_val;
-    }
-
     public static boolean check_lspdu(pkt_LSPDU pkt, ArrayList<pkt_LSPDU> pktlist){
         for (pkt_LSPDU p:pktlist){
             if (p.getRouter_id() == pkt.getRouter_id() && p.getLink_id() == pkt.getLink_id() && p.getCost() == pkt.getCost() 
                 && p.getVia() == pkt.getVia()) {
-                    return true;
-                }
+                return true;
+            }
         }
         return false;
     }
@@ -206,7 +194,8 @@ public class router {
                     }
 
                     // check if this link is already complete in router's database
-                    if (!complete_edges_contains(complete_edges, linkcost)) { // not a complete edge
+                    edge keyCheck = complete_edges.get(linkcost); // returns null if key not in map, otherwise value
+                    if (keyCheck == null) { // not a complete edge
                         if (!floating_edges_contains(floating_edges, linkcost)) { // adding edge to floating edge list
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
                         } else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) { // adding edge to complete edge list
