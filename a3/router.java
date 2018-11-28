@@ -55,8 +55,8 @@ public class router {
 
         // receive circuit data, containing all local edges
         byte[] dataArray = new byte[562];
-        DatagramPacket receivePacket = new DatagramPacket(dataArray, dataArray.length);
-        UDP_Socket.receive(receivePacket);
+        DatagramPacket circuitPacket = new DatagramPacket(dataArray, dataArray.length);
+        UDP_Socket.receive(circuitPacket);
 
         circuit_DB circuit = circuit_DB.circuit_parseUDPdata(dataArray);
         linkNum = circuit.getNum_links();
@@ -124,9 +124,10 @@ public class router {
         while (true) {
             try {
                 dataArray=new byte[562];
-                receivePacket= new DatagramPacket(dataArray, dataArray.length);
+                DatagramPacket newPacket= new DatagramPacket(dataArray, dataArray.length);
+                // Loop exit condition is timeout
                 UDP_Socket.setSoTimeout(1500);
-                UDP_Socket.receive(receivePacket);
+                UDP_Socket.receive(newPacket);
 
                 ByteBuffer buffer = ByteBuffer.wrap(dataArray);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
