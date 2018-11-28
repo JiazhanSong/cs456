@@ -62,7 +62,7 @@ public class router {
 
     public static void main(String[] args) throws Exception {
         int numLinks;
-        link_cost [] routerLinkcosts;
+        link_cost [] routerLinks;
 
         int ID = Integer.valueOf(args[0]);
         String stringID = args[0];
@@ -103,11 +103,11 @@ public class router {
         circuit_DB circuit = circuit_DB.circuit_parseUDPdata(circuitData);
 
         numLinks = circuit.nbr_link;
-        routerLinkcosts = circuit.linkcost;
+        routerLinks = circuit.linkcost;
         log_writer.write("Router " + stringID + " received circuit_DB with numLinks: " + Integer.toString(numLinks));
         log_writer.newLine();
         for (int i = 0; i<numLinks; i++){
-            newEdges.put(routerLinkcosts[i], ID);
+            newEdges.put(routerLinks[i], ID);
         }
         
         // logging initial topology/rib
@@ -168,12 +168,12 @@ public class router {
 
         // sending hello packets to router's neighbours
         for (int i = 0; i<numLinks; i++){
-            pkt_HELLO hello_pkt = new pkt_HELLO(ID, routerLinkcosts[i].getLink());
+            pkt_HELLO hello_pkt = new pkt_HELLO(ID, routerLinks[i].getLink());
             byte[] hello_message = hello_pkt.getUDPdata();
             DatagramPacket hello_packet = new DatagramPacket(hello_message, hello_message.length, address, nsePort);
             receiveSocket.send(hello_packet);
             log_writer.write("R" + stringID + " sends a HELLO: ID " + stringID +
-                              ", link_id " + Integer.toString(routerLinkcosts[i].getLink()));
+                              ", link_id " + Integer.toString(routerLinks[i].getLink()));
             log_writer.newLine();
         }
 
@@ -244,12 +244,12 @@ public class router {
                             }
                             inTree.add(ID);
                             for (link_cost l : finishedEdges.keySet()) {
-                                if (finishedEdges.get(l).getR1() == ID) {
-                                    D_costs.set(finishedEdges.get(l).getR2() - 1, l.getCost());
-                                    D_names.set(finishedEdges.get(l).getR2() - 1, finishedEdges.get(l).getR2());
-                                } else if (finishedEdges.get(l).getR2() == ID) {
-                                    D_costs.set(finishedEdges.get(l).getR1() - 1, l.getCost());
-                                    D_names.set(finishedEdges.get(l).getR1() - 1, finishedEdges.get(l).getR1());
+                                if (finishedEdges.get(l).router1 == ID) {
+                                    D_costs.set(finishedEdges.get(l).router2 - 1, l.getCost());
+                                    D_names.set(finishedEdges.get(l).router2 - 1, finishedEdges.get(l).router2);
+                                } else if (finishedEdges.get(l).router2 == ID) {
+                                    D_costs.set(finishedEdges.get(l).router1 - 1, l.getCost());
+                                    D_names.set(finishedEdges.get(l).router1 - 1, finishedEdges.get(l).router1);
                                 }
                             }
 
@@ -271,16 +271,16 @@ public class router {
                                 }
                                 inTree.add(min_index + 1); // adding router number to tree (1-5)
                                 for (link_cost l : finishedEdges.keySet()) {
-                                    if (finishedEdges.get(l).getR1() == (min_index + 1)) {
-                                        int router2 = finishedEdges.get(l).getR2();
+                                    if (finishedEdges.get(l).router1 == (min_index + 1)) {
+                                        int router2 = finishedEdges.get(l).router2;
                                         if (inTree.contains(router2)) continue;
                                         if (D_costs.get(min_index) + l.getCost() < 0) continue;
                                         if (D_costs.get(router2 - 1) > D_costs.get(min_index) + l.getCost()) {
                                             D_costs.set(router2 - 1, D_costs.get(min_index) + l.getCost());
                                             D_names.set(router2 - 1, D_names.get(min_index));
                                         }
-                                    } else if (finishedEdges.get(l).getR2() == (min_index + 1)) {
-                                        int router2 = finishedEdges.get(l).getR1();
+                                    } else if (finishedEdges.get(l).router2 == (min_index + 1)) {
+                                        int router2 = finishedEdges.get(l).router1;
                                         if (inTree.contains(router2)) continue;
                                         if (D_costs.get(min_index) + l.getCost() < 0) continue;
                                         if (D_costs.get(router2 - 1) > D_costs.get(min_index) + l.getCost()) {
@@ -352,9 +352,9 @@ public class router {
 
                     // forwarding ls_pdu to all neighbours
                     for (int i = 0; i < numLinks; i++) {
-                        if (routerLinkcosts[i].getLink() == via || !(rec_hello_links.contains(routerLinkcosts[i].getLink())))
+                        if (routerLinks[i].getLink() == via || !(rec_hello_links.contains(routerLinks[i].getLink())))
                             continue;
-                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, routerLinkcosts[i].getLink());
+                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.getRouter_id(), link, cost, routerLinks[i].getLink());
                         if (check_lspdu(sent_lspdu, forward_pkt)) continue;
                         else sent_lspdu.add(forward_pkt);
                         byte[] forward_message = forward_pkt.getUDPdata();
@@ -362,7 +362,7 @@ public class router {
                         receiveSocket.send(forward_packet);
                         log_writer.write("R" + stringID + " sends an LS PDU: sender " + stringID +
                                 ", ID " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(link) +
-                                ", cost " + Integer.toString(cost) + ", via " + Integer.toString(routerLinkcosts[i].getLink()));
+                                ", cost " + Integer.toString(cost) + ", via " + Integer.toString(routerLinks[i].getLink()));
                         log_writer.newLine();
                     }
                 }
