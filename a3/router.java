@@ -187,8 +187,13 @@ public class router {
                     // check if this link is already complete in router's database
                     edge keyCheck = complete_edges.get(linkcost); // returns null if key not in map, otherwise value
                     if (keyCheck == null) { // not a complete edge
-                        Integer keycheck2 = floating_edges.get(linkcost); // returns null if key not in map, otherwise value
-                        if (keycheck2 == null) { // adding edge to floating edge list
+                        boolean keycheck2 = false;
+                        for (link_cost l: floating_edges.keySet()) {
+                            if (l.getLink() == linkcost.getLink() && l.getCost() == linkcost.getCost()){
+                                keycheck2 = true;
+                            }
+                        }
+                        if (keycheck2) { // adding edge to floating edge list
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
                         } else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) { // adding edge to complete edge list
                             edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(floating_edges, linkcost));
