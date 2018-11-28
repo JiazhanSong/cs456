@@ -85,8 +85,8 @@ public class router {
         ArrayList<Integer> rec_hello_links = new ArrayList<Integer>();
         ArrayList<pkt_LSPDU> sent_lspdu = new ArrayList<pkt_LSPDU>();
         ArrayList<Integer> inTree = null;
-        ArrayList<Integer> D_costs = null;
-        ArrayList<Integer> D_names = null;
+        int [] D_costs = null;
+        int [] D_names = null;
 
         // send init packet to network state emulator containing router id
         log_writer.write("Router " + Integer.toString(router_id) + " sending INIT to network state emulator\n");
@@ -109,6 +109,7 @@ public class router {
             floating_edges.put(local_linkcosts[i], router_id);
         }
 
+        // populate array list of pending Hellos
         for (int neighbor = 0; neighbor<numlinks; neighbor++) {
             Integer linkNum = local_linkcosts[neighbor].getLink();
             rec_hello_links.add(linkNum);
@@ -144,15 +145,15 @@ public class router {
             String router_to = "R" + Integer.toString(i+1);
             String dname = "";
             String dcost = "";
-            if (D_names == null || D_names.get(i) == Integer.MAX_VALUE){
+            if (D_names == null || D_names[i] == Integer.MAX_VALUE){
                 dname = "INF";
             } else {
-                dname = "R" + Integer.toString(D_names.get(i));
+                dname = "R" + Integer.toString(D_names[i]);
             }
-            if (D_costs == null || D_costs.get(i) == Integer.MAX_VALUE){
+            if (D_costs == null || D_costs[i] == Integer.MAX_VALUE){
                 dcost = "INF";
             } else {
-                dcost = Integer.toString(D_costs.get(i));
+                dcost = Integer.toString(D_costs[i]);
             }
             if (router_id == (i+1)){
                 log_writer.write(router_from + " -> " + router_to + " -> Local, 0");
@@ -191,42 +192,41 @@ public class router {
                 // checking if packet is hello packet or lspdu packet
                 if (int3 != 0 || int4 != 0 || int5 != 0) { // if not hello packet
                     pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(receiveData);
-                    log_writer.write("R" + Integer.toString(router_id) + " receives an LS PDU: sender " + Integer.toString(rec_lspdu.getSender()) +
-                                      ", router_id " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(rec_lspdu.getLink_id()) +
-                                      ", cost " + Integer.toString(rec_lspdu.getCost()) + ", via " + Integer.toString(rec_lspdu.getVia()));
-                    log_writer.newLine();
+                    String message = "R" + Integer.toString(router_id) + " receives an LS PDU: sender " + Integer.toString(rec_lspdu.getSender());
+                    message += ", router_id " + Integer.toString(rec_lspdu.getRouter_id()) + ", link_id " + Integer.toString(rec_lspdu.getLink_id());
+                    message += ", cost " + Integer.toString(rec_lspdu.getCost()) + ", via " + Integer.toString(rec_lspdu.getVia()) + "\n";
+                    log_writer.write(message);
+
                     int link = rec_lspdu.getLink_id();
+                    int via = rec_lspdu.getVia();
                     int cost = rec_lspdu.getCost();
                     link_cost linkcost = new link_cost(link, cost);
-                    int via = rec_lspdu.getVia();
 
                     // check if this link is already complete in router's database
                     if (!complete_edges_contains(complete_edges, linkcost)) { // not a complete edge
                         if (!floating_edges_contains(floating_edges, linkcost)) { // adding edge to floating edge list
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
-                        } else if (floating_edges_contains(floating_edges, linkcost) &&
-                                (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id())) { // adding edge to complete edge list
+                        } else if (floating_edges_retreive(floating_edges, linkcost) != rec_lspdu.getRouter_id()) { // adding edge to complete edge list
                             edge routers = new edge(rec_lspdu.getRouter_id(), floating_edges_retreive(floating_edges, linkcost));
                             floating_edges.put(linkcost, rec_lspdu.getRouter_id());
                             complete_edges.put(linkcost, routers);
 
                             // Dijkstra's algorithm to compute shortest paths with addition of new edge
                             inTree = new ArrayList<Integer>();
-                            D_costs = new ArrayList<Integer>(5);
-                            D_names = new ArrayList<Integer>(5);
+                            D_costs = new int[5];
+                            D_names = new int[5];
+                            
+                            Arrays.fill(D_costs, Integer.MAX_VALUE);
+                            Arrays.fill(D_names, Integer.MAX_VALUE);
 
-                            for (int i = 0; i < 5; i++) {
-                                D_costs.add(Integer.MAX_VALUE);
-                                D_names.add(Integer.MAX_VALUE);
-                            }
                             inTree.add(router_id);
                             for (link_cost l : complete_edges.keySet()) {
                                 if (complete_edges.get(l).getR1() == router_id) {
-                                    D_costs.set(complete_edges.get(l).getR2() - 1, l.getCost());
-                                    D_names.set(complete_edges.get(l).getR2() - 1, complete_edges.get(l).getR2());
+                                    D_costs[complete_edges.get(l).getR2() - 1] = l.getCost();
+                                    D_names[complete_edges.get(l).getR2() - 1] = complete_edges.get(l).getR2();
                                 } else if (complete_edges.get(l).getR2() == router_id) {
-                                    D_costs.set(complete_edges.get(l).getR1() - 1, l.getCost());
-                                    D_names.set(complete_edges.get(l).getR1() - 1, complete_edges.get(l).getR1());
+                                    D_costs[complete_edges.get(l).getR1() - 1] = l.getCost();
+                                    D_names[complete_edges.get(l).getR1() - 1] = complete_edges.get(l).getR1();
                                 }
                             }
 
@@ -241,9 +241,9 @@ public class router {
 
                                 for (int i = 0; i < 5; i++) {
                                     if (inTree.contains(i + 1)) continue;
-                                    if (D_costs.get(i) < min) {
+                                    if (D_costs[i] < min) {
                                         min_index = i;
-                                        min = D_costs.get(i);
+                                        min = D_costs[i];
                                     }
                                 }
                                 inTree.add(min_index + 1); // adding router number to tree (1-5)
@@ -251,18 +251,18 @@ public class router {
                                     if (complete_edges.get(l).getR1() == (min_index + 1)) {
                                         int router2 = complete_edges.get(l).getR2();
                                         if (inTree.contains(router2)) continue;
-                                        if (D_costs.get(min_index) + l.getCost() < 0) continue;
-                                        if (D_costs.get(router2 - 1) > D_costs.get(min_index) + l.getCost()) {
-                                            D_costs.set(router2 - 1, D_costs.get(min_index) + l.getCost());
-                                            D_names.set(router2 - 1, D_names.get(min_index));
+                                        if (D_costs[min_index] + l.getCost() < 0) continue;
+                                        if (D_costs[router2 - 1] > D_costs[min_index] + l.getCost()) {
+                                            D_costs[router2 - 1] = D_costs[min_index] + l.getCost();
+                                            D_names[router2 - 1] = D_names[min_index];
                                         }
                                     } else if (complete_edges.get(l).getR2() == (min_index + 1)) {
                                         int router2 = complete_edges.get(l).getR1();
                                         if (inTree.contains(router2)) continue;
-                                        if (D_costs.get(min_index) + l.getCost() < 0) continue;
-                                        if (D_costs.get(router2 - 1) > D_costs.get(min_index) + l.getCost()) {
-                                            D_costs.set(router2 - 1, D_costs.get(min_index) + l.getCost());
-                                            D_names.set(router2 - 1, D_names.get(min_index));
+                                        if (D_costs[min_index] + l.getCost() < 0) continue;
+                                        if (D_costs[router2 - 1] > D_costs[min_index] + l.getCost()) {
+                                            D_costs[router2 - 1] = D_costs[min_index] + l.getCost();
+                                            D_names[router2 - 1] = D_names[min_index];
                                         }
                                     }
                                 }
@@ -297,15 +297,15 @@ public class router {
                             String router_to = "R" + Integer.toString(i+1);
                             String dname = "";
                             String dcost = "";
-                            if (D_names == null || D_names.get(i) == Integer.MAX_VALUE){
+                            if (D_names == null || D_names[i] == Integer.MAX_VALUE){
                                 dname = "INF";
                             } else {
-                                dname = "R" + Integer.toString(D_names.get(i));
+                                dname = "R" + Integer.toString(D_names[i]);
                             }
-                            if (D_costs == null || D_costs.get(i) == Integer.MAX_VALUE){
+                            if (D_costs == null || D_costs[i] == Integer.MAX_VALUE){
                                 dcost = "INF";
                             } else {
-                                dcost = Integer.toString(D_costs.get(i));
+                                dcost = Integer.toString(D_costs[i]);
                             }
                             if (router_id == (i+1)){
                                 log_writer.write(router_from + " -> " + router_to + " -> Local, 0");
@@ -334,12 +334,11 @@ public class router {
                     }
                 } else { // if it is hello packet
                     pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(receiveData);
-                    rec_hello_links.remove( Integer.valueOf(rec_hello.getLink_id()) );
                     log_writer.write("R" + Integer.toString(router_id) + " receives a HELLO: router_id " + Integer.toString(rec_hello.getRouter_id()) +
                                       ", link_id " + Integer.toString(rec_hello.getLink_id()));
                     log_writer.newLine();
 
-                    for (link_cost elem : floating_edges.keySet()) {
+                    for (link_cost elem : floating_edges.keySet()) { // send each edge one at a time
                         int router = floating_edges_retreive(floating_edges, elem);
                         pkt_LSPDU hello_response = new pkt_LSPDU(router_id, router, elem.getLink(), elem.getCost(), rec_hello.getLink_id());
                         byte[] hello_res = hello_response.getUDPdata();
@@ -350,6 +349,8 @@ public class router {
                                           ", cost " + Integer.toString(elem.getCost()) + ", via " + Integer.toString(rec_hello.getLink_id()));
                         log_writer.newLine();
                     }
+                    // remove link from pending Hellos
+                    rec_hello_links.remove( Integer.valueOf(rec_hello.getLink_id()) );
                 }
             } catch (SocketTimeoutException e){
                 break;
