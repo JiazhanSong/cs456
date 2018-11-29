@@ -1,14 +1,14 @@
 import java.nio.*;
 
 // data structure for lspdu
-public class pkt_LSPDU {
+public class pktLSPDU {
     public int sender;
     public int router_id;
     public int link_id;
     public int cost;
     public int via;
 
-    public pkt_LSPDU(int send, int router, int link, int input_cost, int input_via){
+    public pktLSPDU(int send, int router, int link, int input_cost, int input_via){
         sender = send;
         router_id = router;
         link_id = link;
@@ -27,7 +27,7 @@ public class pkt_LSPDU {
         return buffer.array();
     }
 
-    public static pkt_LSPDU lspdu_parseUDPdata(byte[] UDPdata) throws Exception {
+    public static pktLSPDU lspdu_parseUDPdata(byte[] UDPdata) throws Exception {
         ByteBuffer buffer = ByteBuffer.wrap(UDPdata);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         int sender = buffer.getInt();
@@ -35,7 +35,7 @@ public class pkt_LSPDU {
         int link_id = buffer.getInt();
         int cost = buffer.getInt();
         int via = buffer.getInt();
-        return new pkt_LSPDU(sender, router_id, link_id, cost, via);
+        return new pktLSPDU(sender, router_id, link_id, cost, via);
     }
 }
 
