@@ -39,7 +39,7 @@ public class router {
         // pending hellos
         ArrayList<Integer> pendingHellos = new ArrayList<Integer>();
         // send lspdus
-        ArrayList<pktLSPDU > sentLS_PDU = new ArrayList<pktLSPDU>();
+        ArrayList<LSPDU > sentLS_PDU = new ArrayList<LSPDU>();
 
         // database
         Map<linkData, finishedEdge> finishedEdges = new HashMap<linkData, finishedEdge>();
@@ -148,7 +148,7 @@ public class router {
                 ByteBuffer buffer = ByteBuffer.wrap(dataArray);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-                // tentatively assume it is a pktLSPDU, perform a check to confirm
+                // tentatively assume it is a LSPDU, perform a check to confirm
                 int sender=buffer.getInt();
                 int router_id=buffer.getInt();
                 int link=buffer.getInt();
@@ -156,7 +156,7 @@ public class router {
                 int via=buffer.getInt();
 
                 if (link != 0) { // if lspdu, because a hello will contain zeros for these fields
-                    pktLSPDU rec_lspdu = pktLSPDU.lspdu_parseUDPdata(dataArray);
+                    LSPDU rec_lspdu = LSPDU.lspdu_parseUDPdata(dataArray);
                     String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(rec_lspdu.sender);
                     message += ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID " + Integer.toString(rec_lspdu.link_id);
                     message += ", cost " + Integer.toString(rec_lspdu.cost) + ", via " + Integer.toString(rec_lspdu.via) + "\n";
@@ -167,7 +167,7 @@ public class router {
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < linkNum; i++) {
-                        pktLSPDU forward_pkt = new pktLSPDU(ID, rec_lspdu.router_id, link, cost, localLinks[i].link);
+                        LSPDU forward_pkt = new LSPDU(ID, rec_lspdu.router_id, link, cost, localLinks[i].link);
                         // if bad link (no hello received, don't resend to sender, or already sent before), do not send
                         if (pendingHellos.contains(localLinks[i].link) || localLinks[i].link == via) {
                             continue;
@@ -175,7 +175,7 @@ public class router {
 
                         // check if already sent
                         boolean flag = false;
-                        for (pktLSPDU p: sentLS_PDU) {
+                        for (LSPDU p: sentLS_PDU) {
                             if (p.router_id == forward_pkt.router_id && p.link_id == forward_pkt.link_id &&
                                 p.cost == forward_pkt.cost && p.via == forward_pkt.via) {
                                 flag = true;
@@ -327,7 +327,7 @@ public class router {
 
                     for (linkData elem : incompleteEdges.keySet()) { // send each finishedEdge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
-                        pktLSPDU hello_response = new pktLSPDU(ID, routerOfEdge, elem.link, elem.cost, helloLinkID);
+                        LSPDU hello_response = new LSPDU(ID, routerOfEdge, elem.link, elem.cost, helloLinkID);
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nsePort);
                         UDP_Socket.send(hello_response_pkt);
