@@ -10,8 +10,8 @@ public class circuit_DB {
         num_links = links;
         linkcost = new link_cost[5];
         for (int i = 0; i<links; i++){
-            int link = linkcosts[i].getLink();
-            int cost = linkcosts[i].getCost();
+            int link = linkcosts[i].link;
+            int cost = linkcosts[i].cost;
             linkcost[i] = new link_cost(link, cost);
         }
     }
