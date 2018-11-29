@@ -9,7 +9,7 @@ public class router {
     // helper
     public static int getLinkID(link_cost link, Map<link_cost, Integer> hashmap) {
         for (link_cost elem: hashmap.keySet()) {
-            if (elem.getLink() == link.getLink() && elem.cost == link.cost) {
+            if (elem.link == link.link && elem.cost == link.cost) {
                 return hashmap.get(elem);
             }
         }
@@ -72,7 +72,7 @@ public class router {
 
         // populate array list of pending Hellos
         for (int neighbor = 0; neighbor<linkNum; neighbor++) {
-            Integer neighborLink = localLinks[neighbor].getLink();
+            Integer neighborLink = localLinks[neighbor].link;
             pendingHellos.add(neighborLink);
         }
         
@@ -87,7 +87,7 @@ public class router {
             int routerID = incompleteEdges.get(elem);
             int routerIndex = routerID-1;
             printLinkNum[routerIndex]++;
-            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.cost) + "\n";
+            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.link) + " cost " + Integer.toString(elem.cost) + "\n";
         }
 
         bufferedWriter.write("\n# Topology database\n");
@@ -114,12 +114,12 @@ public class router {
 
         // Each router then sends a HELLO_PDU to tell its neighbour
         for (int neighbor=0; neighbor<linkNum; neighbor++) {
-            bufferedWriter.write("R" + stringID + " sends a HELLO: ID " + stringID + ", linkID " + Integer.toString(localLinks[neighbor].getLink()) + "\n");
+            bufferedWriter.write("R" + stringID + " sends a HELLO: ID " + stringID + ", linkID " + Integer.toString(localLinks[neighbor].link) + "\n");
 
             ByteBuffer buffer = ByteBuffer.allocate(8);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             // add data
-            buffer.putInt(ID); buffer.putInt( localLinks[neighbor].getLink() );
+            buffer.putInt(ID); buffer.putInt( localLinks[neighbor].link );
 
             DatagramPacket hello_packet = new DatagramPacket(buffer.array(), buffer.array().length, address, nsePort);
             UDP_Socket.send(hello_packet);
@@ -159,9 +159,9 @@ public class router {
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < linkNum; i++) {
-                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.router_id, link, cost, localLinks[i].getLink());
+                        pkt_LSPDU forward_pkt = new pkt_LSPDU(ID, rec_lspdu.router_id, link, cost, localLinks[i].link);
                         // if bad link (no hello received, don't resend to sender, or already sent before), do not send
-                        if (pendingHellos.contains(localLinks[i].getLink()) || localLinks[i].getLink() == via) {
+                        if (pendingHellos.contains(localLinks[i].link) || localLinks[i].link == via) {
                             continue;
                         }
 
@@ -182,7 +182,7 @@ public class router {
                         UDP_Socket.send(forward_packet);
 
                         String lspduMessage = "R" + stringID + " sends an ls_PDU: sender " + stringID + ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID ";
-                        lspduMessage += Integer.toString(link) + ", cost " + Integer.toString(cost) + ", via " + Integer.toString(localLinks[i].getLink()) + "\n";
+                        lspduMessage += Integer.toString(link) + ", cost " + Integer.toString(cost) + ", via " + Integer.toString(localLinks[i].link) + "\n";
                         bufferedWriter.write(lspduMessage);
                     }
 
@@ -190,7 +190,7 @@ public class router {
                     if (keyCheck == null) { // not a complete edge
                         boolean keycheck2 = false;
                         for (link_cost elem: incompleteEdges.keySet()) {
-                            if (elem.getLink() == pktLink.getLink() && elem.cost == pktLink.cost) {
+                            if (elem.link == pktLink.link && elem.cost == pktLink.cost) {
                                 keycheck2 = true;
                             }
                         }
@@ -279,7 +279,7 @@ public class router {
                             int routerID = incompleteEdges.get(elem);
                             int routerIndex = routerID-1;
                             printLinkNum[routerIndex]++;
-                            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.getLink()) + " cost " + Integer.toString(elem.cost) + "\n";
+                            printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.link) + " cost " + Integer.toString(elem.cost) + "\n";
                         }
 
                         bufferedWriter.write("\n# Topology database\n");
@@ -319,12 +319,12 @@ public class router {
 
                     for (link_cost elem : incompleteEdges.keySet()) { // send each edge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
-                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.getLink(), elem.cost, helloLinkID);
+                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.link, elem.cost, helloLinkID);
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nsePort);
                         UDP_Socket.send(hello_response_pkt);
                         
-                        String helloMsg = "R" + stringID + " sends an ls_PDU: sender " + stringID +", ID " + Integer.toString(routerOfEdge) + ", linkID " + Integer.toString(elem.getLink());
+                        String helloMsg = "R" + stringID + " sends an ls_PDU: sender " + stringID +", ID " + Integer.toString(routerOfEdge) + ", linkID " + Integer.toString(elem.link);
                         helloMsg += ", cost " + Integer.toString(elem.cost) + ", via " + Integer.toString(helloLinkID) + "\n";
                         bufferedWriter.write(helloMsg);
                     }
