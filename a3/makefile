@@ -7,4 +7,4 @@ CLASSES = linkData.java finishedEdge.java LSPDU.java router.java
 default: $(CLASSES:.java=.class)
 
 clean:
-	rm *.class
+	$(RM) *.class

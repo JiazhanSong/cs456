@@ -7,5 +7,3 @@ public class finishedEdge {
         router2 = second;
     }
 }
-
-

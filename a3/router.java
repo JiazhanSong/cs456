@@ -16,9 +16,9 @@ public class router {
         return 0;
     }
 
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws Exception{    
         // members
-        linkData [] localLinks = new linkData[5];
+        linkData [] localLinks = new linkData[5];  
         int linkNum;
 
         // command line args
@@ -49,7 +49,7 @@ public class router {
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
         bufferedWriter.write("Router " + stringID + " sending INIT to network state emulator\n");
 
-        ByteBuffer initBuffer = ByteBuffer.allocate(4);
+        ByteBuffer initBuffer = ByteBuffer.allocate(4);     
         initBuffer.order(ByteOrder.LITTLE_ENDIAN);
         initBuffer.putInt(ID);
 
@@ -88,7 +88,7 @@ public class router {
         String [] printLinkData = new String[5];
         Arrays.fill(printLinkData, "");
 
-        int [] printLinkNum = new int[5];
+        int [] printLinkNum = new int[5];       
         Arrays.fill(printLinkNum, 0);
         
         for ( linkData elem: incompleteEdges.keySet() ) { // only contains data for itself at the beginning
@@ -112,7 +112,7 @@ public class router {
             if ((i+1) == ID) {
                 bufferedWriter.write(routerDirection + " -> Local, 0");
             } 
-            else {
+            else {      
                 bufferedWriter.write(routerDirection + " -> " + output);
             }
 
@@ -134,7 +134,7 @@ public class router {
         }
 
         // data for dijkstras
-        int [] linkCostArray = null;
+        int [] linkCostArray = null;    
         int [] linkNameArray = null;
 
         while (true) {
@@ -142,7 +142,7 @@ public class router {
                 dataArray=new byte[562];
                 DatagramPacket newPacket= new DatagramPacket(dataArray, dataArray.length);
                 // Loop exit condition is timeout
-                UDP_Socket.setSoTimeout(1500);
+                UDP_Socket.setSoTimeout(1600);
                 UDP_Socket.receive(newPacket);
 
                 ByteBuffer buffer = ByteBuffer.wrap(dataArray);
@@ -219,8 +219,8 @@ public class router {
                             finishedEdges.put(pktLink, routers);
 
                             // Compute one hop for shortest path
-                            linkCostArray = new int[5];
-                            linkNameArray = new int[5];
+                            linkCostArray = new int[5]; 
+                            linkNameArray = new int[5]; 
                             Arrays.fill(linkCostArray, Integer.MAX_VALUE);
                             Arrays.fill(linkNameArray, Integer.MAX_VALUE);
 
@@ -327,7 +327,7 @@ public class router {
                     helloBuffer.order(ByteOrder.LITTLE_ENDIAN);
                     int helloRouterID = helloBuffer.getInt();
                     int helloLinkID = helloBuffer.getInt();
-
+    
                     String helloMessage = "R" + stringID + " receives a HELLO: ID " + Integer.toString(helloRouterID);
                     helloMessage += ", linkID " + Integer.toString(helloLinkID) + "\n";
                     bufferedWriter.write(helloMessage);
