@@ -1,5 +1,3 @@
-import java.nio.*;
-
 // data structure for lspdu
 public class LSPDU {
     public int sender;

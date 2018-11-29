@@ -2,7 +2,7 @@
 .java.class:
 	javac -g $*.java
 
-CLASSES = router.java LSPDU.java linkData.java finishedEdge.java
+CLASSES = linkData.java finishedEdge.java LSPDU.java router.java 
 
 default: $(CLASSES:.java=.class)
 

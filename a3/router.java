@@ -245,7 +245,7 @@ public class router {
                                 int lowerBound = Integer.MAX_VALUE;
 
                                 // choose finishedEdge with lowest cost
-                                for (int i = 0; i < 5; i++) {
+                                for (int i=0; i<5; i++) {
                                     if (spanningTree.contains(i+1)) {
                                         continue;
                                     }
@@ -340,8 +340,8 @@ public class router {
                         lspduBuffer.putInt(ID);     lspduBuffer.putInt(routerOfEdge);
                         lspduBuffer.putInt(elem.link);    lspduBuffer.putInt(elem.cost);
                         lspduBuffer.putInt(helloLinkID);
-                        DatagramPacket hello_response_pkt = new DatagramPacket(lspduBuffer.array(), lspduBuffer.array().length, address, nsePort);
-                        UDP_Socket.send(hello_response_pkt);
+                        DatagramPacket helloLSPDU = new DatagramPacket(lspduBuffer.array(), lspduBuffer.array().length, address, nsePort);
+                        UDP_Socket.send(helloLSPDU);
                         
                         String helloMsg = "R" + stringID + " sends an ls_PDU: sender " + stringID +", ID " + Integer.toString(routerOfEdge) + ", linkID " + Integer.toString(elem.link);
                         helloMsg += ", cost " + Integer.toString(elem.cost) + ", via " + Integer.toString(helloLinkID) + "\n";
@@ -350,7 +350,8 @@ public class router {
                     // remove link from pending Hellos
                     pendingHellos.remove( Integer.valueOf(helloLinkID) );
                 }
-            } catch (SocketTimeoutException e) {
+            } 
+            catch (SocketTimeoutException e) {
                 // program end
                 bufferedWriter.close();
                 break;
