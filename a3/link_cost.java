@@ -8,6 +8,5 @@ public class link_cost {
         link = input_link;
         cost = input_cost;
     }
-
 }
 

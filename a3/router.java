@@ -18,7 +18,7 @@ public class router {
 
     public static void main(String[] args) throws Exception{
         // members
-        link_cost [] localLinks;
+        link_cost [] localLinks = new link_cost[5];
         int linkNum;
 
         // command line args
@@ -61,9 +61,17 @@ public class router {
         DatagramPacket circuitPacket = new DatagramPacket(dataArray, dataArray.length);
         UDP_Socket.receive(circuitPacket);
 
-        circuit_DB circuit = circuit_DB.circuit_parseUDPdata(dataArray);
-        linkNum = circuit.getNum_links();
-        localLinks = circuit.getLinkcost();
+        ByteBuffer circuitBuffer = ByteBuffer.wrap(dataArray);
+        circuitBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        linkNum = circuitBuffer.getInt();
+        int temp_link;
+        int temp_cost;
+        for (int i = 0; i<linkNum; i++){
+            temp_link = circuitBuffer.getInt();
+            temp_cost = circuitBuffer.getInt();
+            localLinks[i] = new link_cost(temp_link, temp_cost);
+        }
+
         bufferedWriter.write("R" + stringID + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(linkNum) + "\n");
 
         for (int link=0; link < linkNum; link++) {
