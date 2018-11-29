@@ -48,8 +48,12 @@ public class router {
         // send init packet to network state emulator containing router id
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
         bufferedWriter.write("Router " + stringID + " sending INIT to network state emulator\n");
-        pkt_INIT init_pkt = new pkt_INIT(ID);
-        DatagramPacket init_packet = new DatagramPacket(init_pkt.getUDPdata(), init_pkt.getUDPdata().length, address, nsePort);
+
+        ByteBuffer initBuffer = ByteBuffer.allocate(4);
+        initBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        initBuffer.putInt(ID);
+
+        DatagramPacket init_packet = new DatagramPacket(initBuffer.array(), initBuffer.array().length, address, nsePort);
         UDP_Socket.send(init_packet);
 
         // receive circuit data, containing all local edges
@@ -115,7 +119,7 @@ public class router {
             ByteBuffer buffer = ByteBuffer.allocate(8);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             // add data
-            buffer.putInt(ID); buffer.putInt(localLinks[neighbor].getLink());
+            buffer.putInt(ID); buffer.putInt( localLinks[neighbor].getLink() );
 
             DatagramPacket hello_packet = new DatagramPacket(buffer.array(), buffer.array().length, address, nsePort);
             UDP_Socket.send(hello_packet);
@@ -304,7 +308,7 @@ public class router {
 
                 } 
                 else { // it is hello packet
-                    ByteBuffer helloBuffer = ByteBuffer.wrap(dataArray);
+                    ByteBuffer helloBuffer= ByteBuffer.wrap(dataArray);
                     helloBuffer.order(ByteOrder.LITTLE_ENDIAN);
                     int helloRouterID = helloBuffer.getInt();
                     int helloLinkID = helloBuffer.getInt();
