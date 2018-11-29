@@ -7,8 +7,8 @@ import java.nio.ByteOrder;
 
 public class router {
     // helper
-    public static int getLinkID(link_cost link, Map<link_cost, Integer> hashmap) {
-        for (link_cost elem: hashmap.keySet()) {
+    public static int getLinkID(linkData link, Map<linkData, Integer> hashmap) {
+        for (linkData elem: hashmap.keySet()) {
             if (elem.link == link.link && elem.cost == link.cost) {
                 return hashmap.get(elem);
             }
@@ -18,7 +18,7 @@ public class router {
 
     public static void main(String[] args) throws Exception{
         // members
-        link_cost [] localLinks = new link_cost[5];
+        linkData [] localLinks = new linkData[5];
         int linkNum;
 
         // command line args
@@ -42,8 +42,8 @@ public class router {
         ArrayList<pktLSPDU > sentLS_PDU = new ArrayList<pktLSPDU>();
 
         // database
-        Map<link_cost, edge> finishedEdges = new HashMap<link_cost, edge>();
-        Map<link_cost, Integer> incompleteEdges= new HashMap<link_cost, Integer>();
+        Map<linkData, finishedEdge> finishedEdges = new HashMap<linkData, finishedEdge>();
+        Map<linkData, Integer> incompleteEdges= new HashMap<linkData, Integer>();
 
         // send init packet to network state emulator containing router id
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
@@ -69,7 +69,7 @@ public class router {
         for (int i = 0; i<linkNum; i++){
             temp_link = circuitBuffer.getInt();
             temp_cost = circuitBuffer.getInt();
-            localLinks[i] = new link_cost(temp_link, temp_cost);
+            localLinks[i] = new linkData(temp_link, temp_cost);
         }
 
         bufferedWriter.write("R" + stringID + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(linkNum) + "\n");
@@ -91,7 +91,7 @@ public class router {
         int [] printLinkNum = new int[5];
         Arrays.fill(printLinkNum, 0);
         
-        for ( link_cost elem: incompleteEdges.keySet() ) { // only contains data for itself at the beginning
+        for ( linkData elem: incompleteEdges.keySet() ) { // only contains data for itself at the beginning
             int routerID = incompleteEdges.get(elem);
             int routerIndex = routerID-1;
             printLinkNum[routerIndex]++;
@@ -163,7 +163,7 @@ public class router {
                     bufferedWriter.write(message);
 
 
-                    link_cost pktLink = new link_cost(link, cost);
+                    linkData pktLink = new linkData(link, cost);
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < linkNum; i++) {
@@ -194,10 +194,10 @@ public class router {
                         bufferedWriter.write(lspduMessage);
                     }
 
-                    edge keyCheck = finishedEdges.get(pktLink); // returns null if key not in map, otherwise value
-                    if (keyCheck == null) { // not a complete edge
+                    finishedEdge keyCheck = finishedEdges.get(pktLink); // returns null if key not in map, otherwise value
+                    if (keyCheck == null) { // not a complete finishedEdge
                         boolean keycheck2 = false;
-                        for (link_cost elem: incompleteEdges.keySet()) {
+                        for (linkData elem: incompleteEdges.keySet()) {
                             if (elem.link == pktLink.link && elem.cost == pktLink.cost) {
                                 keycheck2 = true;
                             }
@@ -205,9 +205,9 @@ public class router {
                         // if not in incomplete edges list, add
                         if (!keycheck2) {
                             incompleteEdges.put(pktLink, rec_lspdu.router_id);
-                        } // if new edge is complete, add edge to finished edges list
+                        } // if new finishedEdge is complete, add finishedEdge to finished edges list
                         else if (getLinkID(pktLink, incompleteEdges) != rec_lspdu.router_id) {
-                            edge routers = new edge(rec_lspdu.router_id, getLinkID(pktLink, incompleteEdges));
+                            finishedEdge routers = new finishedEdge(rec_lspdu.router_id, getLinkID(pktLink, incompleteEdges));
                             incompleteEdges.put(pktLink, rec_lspdu.router_id);
                             finishedEdges.put(pktLink, routers);
 
@@ -222,7 +222,7 @@ public class router {
                             // add root for Djikstras
                             spanningTree.add(ID);
                             // add boundary nodes
-                            for (link_cost elem : finishedEdges.keySet()) {
+                            for (linkData elem : finishedEdges.keySet()) {
                                 if (finishedEdges.get(elem).router1 == ID) {
                                     linkCostArray[finishedEdges.get(elem).router2 -1] = elem.cost;
                                     linkNameArray[finishedEdges.get(elem).router2 -1] = finishedEdges.get(elem).router2;
@@ -237,7 +237,7 @@ public class router {
                                 int nodeIndex = 0;
                                 int lowerBound = Integer.MAX_VALUE;
 
-                                // choose edge with lowest cost
+                                // choose finishedEdge with lowest cost
                                 for (int i = 0; i < 5; i++) {
                                     if (spanningTree.contains(i+1)) {
                                         continue;
@@ -249,19 +249,19 @@ public class router {
                                 }
                                 spanningTree.add(nodeIndex + 1);
                                 // update edges
-                                for (link_cost elem : finishedEdges.keySet()) {
+                                for (linkData elem : finishedEdges.keySet()) {
                                     int otherRouter;
-                                    // find edge attached to newly added router
+                                    // find finishedEdge attached to newly added router
                                     if (finishedEdges.get(elem).router1 == (nodeIndex + 1)) {
                                         otherRouter = finishedEdges.get(elem).router2;
                                     } 
                                     else if (finishedEdges.get(elem).router2 == (nodeIndex + 1)) {
                                         otherRouter = finishedEdges.get(elem).router1;
                                     } 
-                                    else { // if edge is not connected to newly added node, ignore
+                                    else { // if finishedEdge is not connected to newly added node, ignore
                                         continue;
                                     }
-                                    // check if edge is new
+                                    // check if finishedEdge is new
                                     if (spanningTree.contains(otherRouter) || (linkCostArray[nodeIndex] + elem.cost) < 0) {
                                         continue;
                                     }
@@ -283,7 +283,7 @@ public class router {
                         Arrays.fill(printLinkNum, 0);
 
                         // prepare to print
-                        for ( link_cost elem: incompleteEdges.keySet() ) { 
+                        for ( linkData elem: incompleteEdges.keySet() ) { 
                             int routerID = incompleteEdges.get(elem);
                             int routerIndex = routerID-1;
                             printLinkNum[routerIndex]++;
@@ -325,7 +325,7 @@ public class router {
                                       ", linkID " + Integer.toString(helloLinkID));
                     bufferedWriter.write("\n");
 
-                    for (link_cost elem : incompleteEdges.keySet()) { // send each edge one at a time from set of lspdus
+                    for (linkData elem : incompleteEdges.keySet()) { // send each finishedEdge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
                         pktLSPDU hello_response = new pktLSPDU(ID, routerOfEdge, elem.link, elem.cost, helloLinkID);
                         byte[] hello_res = hello_response.getUDPdata();
