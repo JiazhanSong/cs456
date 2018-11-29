@@ -16,10 +16,20 @@ public class router {
         return 0;
     }
 
-    public static void main(String[] args) throws Exception{    
+    public static void main(String [] args) throws Exception{    
         // members
-        linkData [] localLinks = new linkData[5];  
+        int NBR_ROUTER = 5; 
+        linkData [] localLinks = new linkData[NBR_ROUTER];  
         int linkNum;
+
+        // pending hellos, arraylist cannot use primitive int so use Integer
+        ArrayList<Integer> pendingHellos = new ArrayList<Integer>();
+        // send lspdus
+        ArrayList<LSPDU > sentLS_PDU = new ArrayList<LSPDU>();
+
+        // database
+        Map<linkData, finishedEdge> finishedEdges = new HashMap<linkData, finishedEdge>();
+        Map<linkData, Integer> incompleteEdges= new HashMap<linkData, Integer>();
 
         // command line args
         int ID = Integer.valueOf(args[0]);
@@ -35,15 +45,6 @@ public class router {
         String s = currentRelativePath.toAbsolutePath().toString();
         File outFile = new File(s + "/" + "router" + stringID + ".log");
         outFile.delete(); // delete if exists
-
-        // pending hellos
-        ArrayList<Integer> pendingHellos = new ArrayList<Integer>();
-        // send lspdus
-        ArrayList<LSPDU > sentLS_PDU = new ArrayList<LSPDU>();
-
-        // database
-        Map<linkData, finishedEdge> finishedEdges = new HashMap<linkData, finishedEdge>();
-        Map<linkData, Integer> incompleteEdges= new HashMap<linkData, Integer>();
 
         // send init packet to network state emulator containing router id
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("router" + stringID + ".log", true));
@@ -72,7 +73,7 @@ public class router {
             localLinks[i] = new linkData(temp_link, temp_cost);
         }
 
-        bufferedWriter.write("R" + stringID + " receives a CIRCUIT_DB: nbr_link " + Integer.toString(linkNum) + "\n");
+        bufferedWriter.write("R" + stringID + " receives Circuit Database: nbr_link " + Integer.toString(linkNum) + "\n");
 
         for (int link=0; link < linkNum; link++) {
             incompleteEdges.put(localLinks[link], ID);
@@ -85,27 +86,27 @@ public class router {
         }
         
         // print database
-        String [] printLinkData = new String[5];
+        String [] printLinkData = new String[NBR_ROUTER];
         Arrays.fill(printLinkData, "");
 
-        int [] printLinkNum = new int[5];       
+        int [] printLinkNum = new int[NBR_ROUTER];       
         Arrays.fill(printLinkNum, 0);
         
         for ( linkData elem: incompleteEdges.keySet() ) { // only contains data for itself at the beginning
             int routerID = incompleteEdges.get(elem);
             int routerIndex = routerID-1;
-            printLinkNum[routerIndex]++;
             printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.link) + " cost " + Integer.toString(elem.cost) + "\n";
+            printLinkNum[routerIndex]++;
         }
 
         bufferedWriter.write("\n# Topology database\n");
-        for (int i=0; i<5 && printLinkNum[i] !=0 ; i++) {
+        for (int i=0; i<NBR_ROUTER && printLinkNum[i] !=0 ; i++) {
             bufferedWriter.write("R" + stringID + " -> " + "R" + Integer.toString(i+1) + " nbr_link " + Integer.toString(printLinkNum[i]) + "\n");
             bufferedWriter.write(printLinkData[i]);
         }
         
         bufferedWriter.write("\n# RIB\n");
-        for (int i = 0; i<5; i++) {
+        for (int i = 0; i<NBR_ROUTER; i++) {
             String routerDirection = "R" + stringID + " -> " + "R" + Integer.toString(i+1);
             String output = "Unknown, Unknown";
             // check if local
@@ -219,8 +220,8 @@ public class router {
                             finishedEdges.put(pktLink, routers);
 
                             // Compute one hop for shortest path
-                            linkCostArray = new int[5]; 
-                            linkNameArray = new int[5]; 
+                            linkCostArray = new int[NBR_ROUTER]; 
+                            linkNameArray = new int[NBR_ROUTER]; 
                             Arrays.fill(linkCostArray, Integer.MAX_VALUE);
                             Arrays.fill(linkNameArray, Integer.MAX_VALUE);
 
@@ -284,8 +285,8 @@ public class router {
                         }
 
                         // The Link State Database and the Routing Information Base (RIB) are printed to a log file
-                        printLinkData = new String[5];
-                        printLinkNum = new int[5];
+                        printLinkData = new String[NBR_ROUTER];
+                        printLinkNum = new int[NBR_ROUTER];
                         Arrays.fill(printLinkData, "");
                         Arrays.fill(printLinkNum, 0);
 
@@ -293,18 +294,18 @@ public class router {
                         for ( linkData elem: incompleteEdges.keySet() ) { 
                             int routerID = incompleteEdges.get(elem);
                             int routerIndex = routerID-1;
-                            printLinkNum[routerIndex]++;
                             printLinkData[routerIndex] += "R" + stringID + " -> " + "R" + Integer.toString(routerID) + " link-" + Integer.toString(elem.link) + " cost " + Integer.toString(elem.cost) + "\n";
+                            printLinkNum[routerIndex]++;
                         }
 
                         bufferedWriter.write("\n# Topology database\n");
-                        for (int i = 0; i<5 && printLinkNum[i] !=0 ; i++) {
+                        for (int i = 0; i<NBR_ROUTER && printLinkNum[i] !=0 ; i++) {
                             bufferedWriter.write("R" + stringID + " -> " + "R" + Integer.toString(i+1) + " nbr_link " + Integer.toString(printLinkNum[i]) + "\n");
                             bufferedWriter.write(printLinkData[i]);
                         }
 
                         bufferedWriter.write("\n# RIB\n");
-                        for (int i = 0; i<5; i++) {
+                        for (int i = 0; i<NBR_ROUTER; i++) {
                             int currentID = i + 1;
                             String routerDirection = "R" + stringID + " -> " + "R" + Integer.toString(currentID);
                             String output = "Unknown, Unknown";
