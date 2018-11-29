@@ -156,10 +156,9 @@ public class router {
                 int via=buffer.getInt();
 
                 if (link != 0) { // if lspdu, because a hello will contain zeros for these fields
-                    LSPDU rec_lspdu = LSPDU.lspdu_parseUDPdata(dataArray);
-                    String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(rec_lspdu.sender);
-                    message += ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID " + Integer.toString(rec_lspdu.link_id);
-                    message += ", cost " + Integer.toString(rec_lspdu.cost) + ", via " + Integer.toString(rec_lspdu.via) + "\n";
+                    String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(sender);
+                    message += ", ID " + Integer.toString(router_id) + ", linkID " + Integer.toString(link);
+                    message += ", cost " + Integer.toString(cost) + ", via " + Integer.toString(via) + "\n";
                     bufferedWriter.write(message);
 
 
@@ -167,7 +166,7 @@ public class router {
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < linkNum; i++) {
-                        LSPDU forward_pkt = new LSPDU(ID, rec_lspdu.router_id, link, cost, localLinks[i].link);
+                        LSPDU forward_pkt = new LSPDU(ID, router_id, link, cost, localLinks[i].link);
                         // if bad link (no hello received, don't resend to sender, or already sent before), do not send
                         if (pendingHellos.contains(localLinks[i].link) || localLinks[i].link == via) {
                             continue;
@@ -189,7 +188,7 @@ public class router {
                         DatagramPacket forward_packet = new DatagramPacket(forward_message, forward_message.length, address, nsePort);
                         UDP_Socket.send(forward_packet);
 
-                        String lspduMessage = "R" + stringID + " sends an ls_PDU: sender " + stringID + ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID ";
+                        String lspduMessage = "R" + stringID + " sends an ls_PDU: sender " + stringID + ", ID " + Integer.toString(router_id) + ", linkID ";
                         lspduMessage += Integer.toString(link) + ", cost " + Integer.toString(cost) + ", via " + Integer.toString(localLinks[i].link) + "\n";
                         bufferedWriter.write(lspduMessage);
                     }
@@ -204,11 +203,11 @@ public class router {
                         }
                         // if not in incomplete edges list, add
                         if (!keycheck2) {
-                            incompleteEdges.put(pktLink, rec_lspdu.router_id);
+                            incompleteEdges.put(pktLink, router_id);
                         } // if new finishedEdge is complete, add finishedEdge to finished edges list
-                        else if (getLinkID(pktLink, incompleteEdges) != rec_lspdu.router_id) {
-                            finishedEdge routers = new finishedEdge(rec_lspdu.router_id, getLinkID(pktLink, incompleteEdges));
-                            incompleteEdges.put(pktLink, rec_lspdu.router_id);
+                        else if (getLinkID(pktLink, incompleteEdges) != router_id) {
+                            finishedEdge routers = new finishedEdge(router_id, getLinkID(pktLink, incompleteEdges));
+                            incompleteEdges.put(pktLink, router_id);
                             finishedEdges.put(pktLink, routers);
 
                             // Compute one hop for shortest path
@@ -321,9 +320,9 @@ public class router {
                     int helloRouterID = helloBuffer.getInt();
                     int helloLinkID = helloBuffer.getInt();
 
-                    bufferedWriter.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(helloRouterID) +
-                                      ", linkID " + Integer.toString(helloLinkID));
-                    bufferedWriter.write("\n");
+                    String helloMessage = "R" + stringID + " receives a HELLO: ID " + Integer.toString(helloRouterID);
+                    helloMessage += ", linkID " + Integer.toString(helloLinkID) + "\n";
+                    bufferedWriter.write(helloMessage);
 
                     for (linkData elem : incompleteEdges.keySet()) { // send each finishedEdge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
