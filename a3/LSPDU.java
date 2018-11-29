@@ -15,27 +15,5 @@ public class LSPDU {
         cost = input_cost;
         via = input_via;
     }
-
-    public byte[] getUDPdata() {
-        ByteBuffer buffer = ByteBuffer.allocate(20);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(sender);
-        buffer.putInt(router_id);
-        buffer.putInt(link_id);
-        buffer.putInt(cost);
-        buffer.putInt(via);
-        return buffer.array();
-    }
-
-    public static LSPDU lspdu_parseUDPdata(byte[] UDPdata) throws Exception {
-        ByteBuffer buffer = ByteBuffer.wrap(UDPdata);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        int sender = buffer.getInt();
-        int router_id = buffer.getInt();
-        int link_id = buffer.getInt();
-        int cost = buffer.getInt();
-        int via = buffer.getInt();
-        return new LSPDU(sender, router_id, link_id, cost, via);
-    }
 }
 

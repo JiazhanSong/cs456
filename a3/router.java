@@ -166,7 +166,7 @@ public class router {
 
                     // Inform each of the rest of neighbours by forwarding/rebroadcasting this LS_PDU to them.
                     for (int i = 0; i < linkNum; i++) {
-                        LSPDU forward_pkt = new LSPDU(ID, router_id, link, cost, localLinks[i].link);
+                        LSPDU newLSPDU = new LSPDU(ID, router_id, link, cost, localLinks[i].link);
                         // if bad link (no hello received, don't resend to sender, or already sent before), do not send
                         if (pendingHellos.contains(localLinks[i].link) || localLinks[i].link == via) {
                             continue;
@@ -175,24 +175,32 @@ public class router {
                         // check if already sent
                         boolean flag = false;
                         for (LSPDU p: sentLS_PDU) {
-                            if (p.router_id == forward_pkt.router_id && p.link_id == forward_pkt.link_id &&
-                                p.cost == forward_pkt.cost && p.via == forward_pkt.via) {
+                            if (p.router_id == newLSPDU.router_id && p.link_id == newLSPDU.link_id &&
+                                p.cost == newLSPDU.cost && p.via == newLSPDU.via) {
                                 flag = true;
                             }
                         }
                         if (flag) continue; // if already sent, continue
 
                         // send new LS_PDU
-                        sentLS_PDU.add(forward_pkt);
-                        byte[] forward_message = forward_pkt.getUDPdata();
-                        DatagramPacket forward_packet = new DatagramPacket(forward_message, forward_message.length, address, nsePort);
+                        sentLS_PDU.add(newLSPDU);
+                        ByteBuffer lspduBuffer = ByteBuffer.allocate(20);
+                        lspduBuffer.order(ByteOrder.LITTLE_ENDIAN);   
+                        // stores 5 integers
+                        lspduBuffer.putInt(newLSPDU.sender);
+                        lspduBuffer.putInt(newLSPDU.router_id);    lspduBuffer.putInt(newLSPDU.link_id);
+                        lspduBuffer.putInt(newLSPDU.cost);         lspduBuffer.putInt(newLSPDU.via);
+
+                        DatagramPacket forward_packet = new DatagramPacket(lspduBuffer.array(), lspduBuffer.array().length, address, nsePort);
                         UDP_Socket.send(forward_packet);
 
+                        // log
                         String lspduMessage = "R" + stringID + " sends an ls_PDU: sender " + stringID + ", ID " + Integer.toString(router_id) + ", linkID ";
                         lspduMessage += Integer.toString(link) + ", cost " + Integer.toString(cost) + ", via " + Integer.toString(localLinks[i].link) + "\n";
                         bufferedWriter.write(lspduMessage);
                     }
 
+                    // update database
                     finishedEdge keyCheck = finishedEdges.get(pktLink); // returns null if key not in map, otherwise value
                     if (keyCheck == null) { // not a complete finishedEdge
                         boolean keycheck2 = false;
@@ -326,9 +334,13 @@ public class router {
 
                     for (linkData elem : incompleteEdges.keySet()) { // send each finishedEdge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
-                        LSPDU hello_response = new LSPDU(ID, routerOfEdge, elem.link, elem.cost, helloLinkID);
-                        byte[] hello_res = hello_response.getUDPdata();
-                        DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nsePort);
+
+                        ByteBuffer lspduBuffer = ByteBuffer.allocate(20);
+                        lspduBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                        lspduBuffer.putInt(ID);     lspduBuffer.putInt(routerOfEdge);
+                        lspduBuffer.putInt(elem.link);    lspduBuffer.putInt(elem.cost);
+                        lspduBuffer.putInt(helloLinkID);
+                        DatagramPacket hello_response_pkt = new DatagramPacket(lspduBuffer.array(), lspduBuffer.array().length, address, nsePort);
                         UDP_Socket.send(hello_response_pkt);
                         
                         String helloMsg = "R" + stringID + " sends an ls_PDU: sender " + stringID +", ID " + Integer.toString(routerOfEdge) + ", linkID " + Integer.toString(elem.link);
