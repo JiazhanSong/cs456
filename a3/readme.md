@@ -1,23 +1,20 @@
-Manfred Wu CS456 Assignment 3
-m84wu/20614707
+Compile java code using makefile, use make command
 
-Compile code by typing "make". 
-Run code by opening 6 windows: 1 on host1, 5 on host2. 
-On host1, run: "./nse-linux386 <host2> <nse-port>"
-On host2, run: "./router 1 <host1> <nse-port> <port1>"
-On host2, run: "./router 2 <host1> <nse-port> <port2>"
-On host2, run: "./router 3 <host1> <nse-port> <port3>"
-On host2, run: "./router 4 <host1> <nse-port> <port4>"
-On host2, run: "./router 5 <host1> <nse-port> <port5>"
 
-Note: it is important to run in the exact order specified.
+Execution:
+On hostX run the nse emulator with command: 
 
-After execution, the programs will timeout after 2 seconds and log files:
-  router1.log, router2.log, router3.log, router4.log, and router5.log
-  will be created in the current directory.
+nse <hostY> <nse_port>
 
-This program was built and tested on the school's undergrad environment, 
-  using hosts: "ubuntu1604-002" and "ubuntu1604-004".
+After running emulator, on hostY run the 5 routers:
 
-The compiler version is: javac 9-internal.
-The make version is: GNU Make 4.1.
+java router <routerNum> <hostX> <nse_port> <router_port>
+
+
+As per assignment specifications, script "router" runs my java program for all 5 routers
+as background processes. Note, running the 5 routers separately works fine as well.
+
+Usage: ./router $1 <hostX> <nse_port> <router_port1> <router_port2> <router_port3> <router_port4> <router_port5>
+
+This program was tested in the school environment on hosts ubuntu1604-006 and ubuntu1604-008
+Compiler and other tools used are the same as on the school environment.
