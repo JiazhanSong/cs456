@@ -111,8 +111,13 @@ public class router {
         // Each router then sends a HELLO_PDU to tell its neighbour
         for (int neighbor=0; neighbor<linkNum; neighbor++) {
             bufferedWriter.write("R" + stringID + " sends a HELLO: ID " + stringID + ", linkID " + Integer.toString(localLinks[neighbor].getLink()) + "\n");
-            pkt_HELLO hello_pkt = new pkt_HELLO(ID, localLinks[neighbor].getLink());
-            DatagramPacket hello_packet = new DatagramPacket(hello_pkt.getUDPdata(), hello_pkt.getUDPdata().length, address, nsePort);
+
+            ByteBuffer buffer = ByteBuffer.allocate(8);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            // add data
+            buffer.putInt(ID); buffer.putInt(localLinks[neighbor].getLink());
+
+            DatagramPacket hello_packet = new DatagramPacket(buffer.array(), buffer.array().length, address, nsePort);
             UDP_Socket.send(hello_packet);
         }
 
