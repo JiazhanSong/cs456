@@ -80,7 +80,7 @@ public class router {
         }
 
         // populate array list of pending Hellos
-        for (int neighbor = 0; neighbor<linkNum; neighbor++) {
+        for (int neighbor=0; neighbor < linkNum; neighbor++) {
             Integer neighborLink = localLinks[neighbor].link;
             pendingHellos.add(neighborLink);
         }
@@ -125,38 +125,38 @@ public class router {
         for (int neighbor=0; neighbor<linkNum; neighbor++) {
             bufferedWriter.write("R" + stringID + " sends a HELLO: ID " + stringID + ", linkID " + Integer.toString(localLinks[neighbor].link) + "\n");
 
-            ByteBuffer buffer = ByteBuffer.allocate(8);
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer neighborBuffer = ByteBuffer.allocate(8);
+            neighborBuffer.order(ByteOrder.LITTLE_ENDIAN);
             // add data
-            buffer.putInt(ID); buffer.putInt( localLinks[neighbor].link );
+            neighborBuffer.putInt(ID); neighborBuffer.putInt( localLinks[neighbor].link );
 
-            DatagramPacket hello_packet = new DatagramPacket(buffer.array(), buffer.array().length, address, nsePort);
+            DatagramPacket hello_packet = new DatagramPacket(neighborBuffer.array(), neighborBuffer.array().length, address, nsePort);
             UDP_Socket.send(hello_packet);
         }
 
-        // data for dijkstras
-        int [] linkCostArray = null;    
-        int [] linkNameArray = null;
-
         while (true) {
-            try {
+            try { // receive data
                 dataArray=new byte[562];
                 DatagramPacket newPacket= new DatagramPacket(dataArray, dataArray.length);
                 // Loop exit condition is timeout
                 UDP_Socket.setSoTimeout(1600);
                 UDP_Socket.receive(newPacket);
 
-                ByteBuffer buffer = ByteBuffer.wrap(dataArray);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
+                ByteBuffer dataBuffer = ByteBuffer.wrap(dataArray);
+                dataBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
                 // tentatively assume it is a LSPDU, perform a check to confirm
-                int sender=buffer.getInt();
-                int router_id=buffer.getInt();
-                int link=buffer.getInt();
-                int cost=buffer.getInt();
-                int via=buffer.getInt();
+                int sender=dataBuffer.getInt();
+                int router_id=dataBuffer.getInt();
+                int link=dataBuffer.getInt();
+                int cost=dataBuffer.getInt();
+                int via=dataBuffer.getInt();
 
-                if (link != 0) { // if lspdu, because a hello will contain zeros for these fields
+                if (link != 0) { // if lspdu, because a hello will contain zeros for this out of bound field
+                    // data for dijkstras
+                    int [] linkCostArray = new int[NBR_ROUTER]; 
+                    int [] linkNameArray = new int[NBR_ROUTER];
+
                     String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(sender);
                     message += ", ID " + Integer.toString(router_id) + ", linkID " + Integer.toString(link);
                     message += ", cost " + Integer.toString(cost) + ", via " + Integer.toString(via) + "\n";
@@ -215,22 +215,20 @@ public class router {
                             incompleteEdges.put(pktLink, router_id);
                         } // if new finishedEdge is complete, add finishedEdge to finished edges list
                         else if (getLinkID(pktLink, incompleteEdges) != router_id) {
-                            finishedEdge routers = new finishedEdge(router_id, getLinkID(pktLink, incompleteEdges));
+                            finishedEdge newEdge = new finishedEdge(router_id, getLinkID(pktLink, incompleteEdges));
                             incompleteEdges.put(pktLink, router_id);
-                            finishedEdges.put(pktLink, routers);
+                            finishedEdges.put(pktLink, newEdge);
 
                             // Compute one hop for shortest path
-                            linkCostArray = new int[NBR_ROUTER]; 
-                            linkNameArray = new int[NBR_ROUTER]; 
+                            // Costs start at infinity for Dijkstras
                             Arrays.fill(linkCostArray, Integer.MAX_VALUE);
                             Arrays.fill(linkNameArray, Integer.MAX_VALUE);
-
-                            ArrayList<Integer> spanningTree = new ArrayList<Integer>();
                             
                             // add root for Djikstras
+                            ArrayList<Integer> spanningTree = new ArrayList<Integer>();
                             spanningTree.add(ID);
                             // add boundary nodes
-                            for (linkData elem : finishedEdges.keySet()) {
+                            for (linkData elem: finishedEdges.keySet()) {
                                 if (finishedEdges.get(elem).router1 == ID) {
                                     linkCostArray[finishedEdges.get(elem).router2 -1] = elem.cost;
                                     linkNameArray[finishedEdges.get(elem).router2 -1] = finishedEdges.get(elem).router2;
@@ -257,7 +255,7 @@ public class router {
                                 }
                                 spanningTree.add(nodeIndex + 1);
                                 // update edges
-                                for (linkData elem : finishedEdges.keySet()) {
+                                for (linkData elem: finishedEdges.keySet()) {
                                     int otherRouter;
                                     // find finishedEdge attached to newly added router
                                     if (finishedEdges.get(elem).router1 == (nodeIndex + 1)) {
@@ -274,6 +272,7 @@ public class router {
                                         continue;
                                     }
                                     if (linkCostArray[otherRouter-1] > linkCostArray[nodeIndex] + elem.cost) {
+                                        // update if lower cost than current cost (Dijkstras)
                                         linkCostArray[otherRouter-1] = linkCostArray[nodeIndex] + elem.cost;
                                         linkNameArray[otherRouter-1] = linkNameArray[nodeIndex];
                                     }
@@ -333,7 +332,7 @@ public class router {
                     helloMessage += ", linkID " + Integer.toString(helloLinkID) + "\n";
                     bufferedWriter.write(helloMessage);
 
-                    for (linkData elem : incompleteEdges.keySet()) { // send each finishedEdge one at a time from set of lspdus
+                    for (linkData elem: incompleteEdges.keySet()) { // send each finishedEdge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
 
                         ByteBuffer lspduBuffer = ByteBuffer.allocate(20);
