@@ -143,7 +143,7 @@ public class router {
                 int cost=buffer.getInt();
                 int via=buffer.getInt();
 
-                if (link != 0) { // if lspdu, because a pkt_hello will contain zeros for these fields
+                if (link != 0) { // if lspdu, because a hello will contain zeros for these fields
                     pkt_LSPDU rec_lspdu = pkt_LSPDU.lspdu_parseUDPdata(dataArray);
                     String message = "R" + stringID + " receives an ls_PDU: sender " + Integer.toString(rec_lspdu.sender);
                     message += ", ID " + Integer.toString(rec_lspdu.router_id) + ", linkID " + Integer.toString(rec_lspdu.link_id);
