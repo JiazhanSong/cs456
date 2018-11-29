@@ -304,24 +304,28 @@ public class router {
 
                 } 
                 else { // it is hello packet
-                    pkt_HELLO rec_hello = pkt_HELLO.hello_parseUDPdata(dataArray);
-                    bufferedWriter.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(rec_hello.router_id) +
-                                      ", linkID " + Integer.toString(rec_hello.link_id));
+                    ByteBuffer helloBuffer = ByteBuffer.wrap(dataArray);
+                    helloBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                    int helloRouterID = helloBuffer.getInt();
+                    int helloLinkID = helloBuffer.getInt();
+
+                    bufferedWriter.write("R" + stringID + " receives a HELLO: ID " + Integer.toString(helloRouterID) +
+                                      ", linkID " + Integer.toString(helloLinkID));
                     bufferedWriter.write("\n");
 
                     for (link_cost elem : incompleteEdges.keySet()) { // send each edge one at a time from set of lspdus
                         int routerOfEdge = getLinkID(elem, incompleteEdges);
-                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.getLink(), elem.cost, rec_hello.link_id);
+                        pkt_LSPDU hello_response = new pkt_LSPDU(ID, routerOfEdge, elem.getLink(), elem.cost, helloLinkID);
                         byte[] hello_res = hello_response.getUDPdata();
                         DatagramPacket hello_response_pkt = new DatagramPacket(hello_res, hello_res.length, address, nsePort);
                         UDP_Socket.send(hello_response_pkt);
                         
                         String helloMsg = "R" + stringID + " sends an ls_PDU: sender " + stringID +", ID " + Integer.toString(routerOfEdge) + ", linkID " + Integer.toString(elem.getLink());
-                        helloMsg += ", cost " + Integer.toString(elem.cost) + ", via " + Integer.toString(rec_hello.link_id) + "\n";
+                        helloMsg += ", cost " + Integer.toString(elem.cost) + ", via " + Integer.toString(helloLinkID) + "\n";
                         bufferedWriter.write(helloMsg);
                     }
                     // remove link from pending Hellos
-                    pendingHellos.remove( Integer.valueOf(rec_hello.link_id) );
+                    pendingHellos.remove( Integer.valueOf(helloLinkID) );
                 }
             } catch (SocketTimeoutException e) {
                 // program end
