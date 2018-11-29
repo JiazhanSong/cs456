@@ -1,0 +1,22 @@
+# read me
+
+
+Compile java code using makefile, use make command. Tested in the school environment on hosts ubuntu1604-006 and ubuntu1604-008 using the school versions of compilers and other tools.
+
+
+EXECUTION:
+On hostX run the nse emulator with command: nse <hostY> <nse_port>
+
+After running emulator, on hostY run the 5 routers: java router <routerNum> <hostX> <nse_port> <router_port>
+
+
+As per assignment specifications, script "router" runs my java program for all 5 routers
+as background processes. Note, that running the 5 routers separately works fine as well.
+
+Usage: ./router $1 <hostX> <nse_port> <router_port1> <router_port2> <router_port3> <router_port4> <router_port5>
+
+
+EXAMPLE EXECUTION:
+On hostX run:  ./nselinux386 ubuntu1604-008 9999
+
+On hostY run:  ./router ubuntu1604-006 9999 2999 2998 2997 2996 2995

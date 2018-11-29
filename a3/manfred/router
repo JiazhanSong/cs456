@@ -1,9 +1,0 @@
-#!/bin/bash
-
-java router 1 localhost 9998 5997 &
-java router 2 localhost 9998 5996 &
-java router 3 localhost 9998 5995 &
-java router 4 localhost 9998 5994 &
-java router 5 localhost 9998 5993
-wait
-
