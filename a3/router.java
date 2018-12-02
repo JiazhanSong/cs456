@@ -228,7 +228,7 @@ public class router {
                             ArrayList<Integer> spanningTree = new ArrayList<Integer>();
                             spanningTree.add(ID);
                             linkCostArray[ID - 1] = 0;
-                            linkCostArray[ID - 1] = ID;
+                            linkNameArray[ID - 1] = ID;
 
                             // add 4 more nodes to complete tree, iterate 4 times
                             for (int j=0; j<4; j++) {
