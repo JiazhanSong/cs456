@@ -227,52 +227,56 @@ public class router {
                             // add root for Djikstras
                             ArrayList<Integer> spanningTree = new ArrayList<Integer>();
                             spanningTree.add(ID);
-                            linkCostArray[ID - 1] = 0;
-                            linkCostArray[ID - 1] = ID;
-
+                            // add boundary nodes
+                            for (linkData elem: finishedEdges.keySet()) {
+                                if (finishedEdges.get(elem).router1 == ID) {
+                                    linkCostArray[finishedEdges.get(elem).router2 -1] = elem.cost;
+                                    linkNameArray[finishedEdges.get(elem).router2 -1] = finishedEdges.get(elem).router2;
+                                } 
+                                else if (finishedEdges.get(elem).router2 == ID) {
+                                    linkCostArray[finishedEdges.get(elem).router1 -1] = elem.cost;
+                                    linkNameArray[finishedEdges.get(elem).router1 -1] = finishedEdges.get(elem).router1;
+                                }
+                            }
                             // add 4 more nodes to complete tree, iterate 4 times
                             for (int j=0; j<4; j++) {
+                                int nodeIndex = 0;
                                 int lowerBound = Integer.MAX_VALUE;
 
+                                // choose finishedEdge with lowest cost
+                                for (int i=0; i<5; i++) {
+                                    if (spanningTree.contains(i+1)) {
+                                        continue;
+                                    }
+                                    if (linkCostArray[i] <= lowerBound) {
+                                        nodeIndex = i;
+                                        lowerBound = linkCostArray[i];
+                                    }
+                                }
+                                spanningTree.add(nodeIndex + 1);
                                 // update edges
-      
-                                int bestNew=0;
-                                int bestOld=0;
-                                int newRouter=0;
-                                int oldRouter=0;
-                                boolean newNode = false;
                                 for (linkData elem: finishedEdges.keySet()) {
-                                    if (spanningTree.contains(finishedEdges.get(elem).router1)) {
-                                        if (spanningTree.contains(finishedEdges.get(elem).router2)) {
-                                            continue;
-                                        }
-                                        newRouter = finishedEdges.get(elem).router2;
-                                        oldRouter = finishedEdges.get(elem).router1;
+                                    int otherRouter;
+                                    // find finishedEdge attached to newly added router
+                                    if (finishedEdges.get(elem).router1 == (nodeIndex + 1)) {
+                                        otherRouter = finishedEdges.get(elem).router2;
+                                    } 
+                                    else if (finishedEdges.get(elem).router2 == (nodeIndex + 1)) {
+                                        otherRouter = finishedEdges.get(elem).router1;
+                                    } 
+                                    else { // if finishedEdge is not connected to newly added node, ignore
+                                        continue;
                                     }
-                                    else if (spanningTree.contains(finishedEdges.get(elem).router2)) {
-                                        newRouter = finishedEdges.get(elem).router1;
-                                        oldRouter = finishedEdges.get(elem).router2;
+                                    // check if finishedEdge is new
+                                    if (spanningTree.contains(otherRouter) || (linkCostArray[nodeIndex] + elem.cost) < 0) {
+                                        continue;
                                     }
-                                    else { continue; }
-
-                                    if (linkCostArray[oldRouter-1] + elem.cost <= lowerBound) {
-                                        newNode = true;
-                                        lowerBound = linkCostArray[oldRouter-1] + elem.cost;
-                                        bestNew = newRouter;
-                                        bestOld = oldRouter;
+                                    if (linkCostArray[otherRouter-1] > linkCostArray[nodeIndex] + elem.cost) {
+                                        // update if lower cost than current cost (Dijkstras)
+                                        linkCostArray[otherRouter-1] = linkCostArray[nodeIndex] + elem.cost;
+                                        linkNameArray[otherRouter-1] = linkNameArray[nodeIndex];
                                     }
                                 }
-                                if (newNode) {
-                                    linkCostArray[newRouter - 1] = lowerBound;
-                                    if (oldRouter == ID) {
-                                        linkNameArray[newRouter - 1] = newRouter;
-                                    }
-                                    else {
-                                        linkNameArray[newRouter - 1] = linkNameArray[oldRouter - 1];
-                                    }
-                                    spanningTree.add(newRouter);
-                                }
-                                newNode = false;
                             }
                         } 
                         else { // no new info
