@@ -263,14 +263,14 @@ public class router {
                                     }
                                 }
                                 if (newNode) {
-                                    linkCostArray[newRouter - 1] = lowerBound;
-                                    if (oldRouter == ID) {
-                                        linkNameArray[newRouter - 1] = newRouter;
+                                    linkCostArray[bestNew - 1] = lowerBound;
+                                    if (bestOld == ID) {
+                                        linkNameArray[bestNew - 1] = bestNew;
                                     }
                                     else {
-                                        linkNameArray[newRouter - 1] = linkNameArray[oldRouter - 1];
+                                        linkNameArray[bestNew - 1] = linkNameArray[bestOld - 1];
                                     }
-                                    spanningTree.add(newRouter);
+                                    spanningTree.add(bestNew);
                                 }
                                 newNode = false;
                             }
