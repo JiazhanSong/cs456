@@ -16,6 +16,10 @@ Usage: ./router <router_number> <hostX> <nse_port> <router_port>
 
 
 EXAMPLE EXECUTION:
-On hostX run:  ./nselinux386 ubuntu1604-008 9999
+On hostX run:  ./nselinux386 ubuntu1604-008 8945
 
-On hostY run:  ./router ubuntu1604-006 9999 2999 2998 2997 2996 2995
+On hostY run:  ./router 1 localhost 8945 8944
+               ./router 2 localhost 8945 8943
+               ./router 3 localhost 8945 8942
+               ./router 4 localhost 8945 8941
+               ./router 5 localhost 8945 8940
