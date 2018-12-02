@@ -255,7 +255,7 @@ public class router {
                                     }
                                     else { continue; }
 
-                                    if (linkCostArray[oldRouter-1] + elem.cost <= lowerBound) {
+                                    if (linkCostArray[oldRouter-1] + elem.cost < lowerBound) {
                                         newNode = true;
                                         lowerBound = linkCostArray[oldRouter-1] + elem.cost;
                                         bestNew = newRouter;
